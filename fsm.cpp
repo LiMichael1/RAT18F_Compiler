@@ -1,18 +1,20 @@
+
+
 #include "fsm.h"
 
 int FSM_ID(char* buffer)	//CALL WHEN THE FIRST CHAR IS A LETTER
 {
 	int flag = 0;
 
-	if (isalpha(buffer[0])!= 0)		//error checking if the first letter is a letter
+	if (isalpha(buffer[0]) != 0)		//error checking if the first letter is a letter
 	{
 		std::cerr << "First character is not a letter\n";
-		return EXIT_FAILURE; 
+		return EXIT_FAILURE;
 	}
 
 
-	
-	
+
+
 
 
 	if (isKeyword(buffer))		//if it is an identifier
@@ -27,37 +29,94 @@ int FSM_ID(char* buffer)	//CALL WHEN THE FIRST CHAR IS A LETTER
 	return flag;
 }
 
-int FSM_INT(char* buffer)	//CALL WHEN THE FIRST CHAR IS A DIGIT
+int FSM_REAL_INT(char* buffer) //0= integer , 1= real
 {
-	int flag = 0;
+	int flag = -1;	//returns if neither 
 
-	if (isdigit(buffer[0]) != 0)	
+	int length = strlen(buffer);
+
+	int state = 1;
+
+	for (int i = 0; i < length; i++)
 	{
-		std::cerr << "First character is not a digit\n";
-		return EXIT_FAILURE;
+		//loop works
+		switch (state)
+		{
+		case 1:
+			printf("check 1\n");
+			if (isdigit(buffer[i]))
+				state = 2;
+			if (buffer[i] == '.')
+				state = 5;
+			if (!isdigit(buffer[i]) && buffer[i] != '.' && buffer[i] != '\0')
+			{
+				printf("Not an integer or a real number because it is not \n");
+				return flag;
+			}
+			break;
+		case 2:
+			printf("check2\n");
+			if (isdigit(buffer[i]))
+				state = 2;
+			if (buffer[i] == '.')
+				state = 3;
+			if (!isdigit(buffer[i]) && buffer[i] != '.' && buffer[i] != '\0')
+			{
+				printf("Not an integer or a real number because it has an unknown character \n");
+				return flag;
+			}
+			break;
+		case 3:
+			if (isdigit(buffer[i]))
+				state = 4;
+			if (buffer[i] == '.')
+				state = 5;
+			if (!isdigit(buffer[i]) && buffer[i] != '.'  && buffer[i] != '\0')
+			{
+				printf("Not an integer or a real number because it has an unknown character \n");
+				return flag;
+			}
+			break;
+		case 4:
+			if (isdigit(buffer[i]))
+				state = 4;
+			if (buffer[i] == '.')
+				state = 5;
+			if (!isdigit(buffer[i]) && buffer[i] != '.'  && buffer[i] != '\0')
+			{
+				printf("Not an integer or a real number because it an unknown character\n");
+				return flag;
+			}
+			break;
+		case 5:
+			if (isdigit(buffer[i]))
+				state = 5;
+			if (buffer[i] == '.')
+				state = 5;
+			if (!isdigit(buffer[i]) && buffer[i] != '.' && buffer[i] != '\0')
+			{
+				printf("Not an integer or a real number because it an unknown character\n");
+				return flag;
+			}
+			break;
+		}
+
 	}
 
-
-
-
-	
-	if (FSM_REAL(buffer))  //real vs integers //call when encountering a decimal point 
+	if (state == 2)//returns 0 if it is an integer
 	{
-			flag = 2;
+		flag = 0;
+		printf("%s is an integer\n", buffer);
 	}
-
+	if (state == 4) //returns 1 if it is a real number
+	{
+		flag = 1;
+		printf("%s is a real number\n", buffer);
+	}
 
 	return flag;
 }
 
-int FSM_REAL(char* buffer)	//CALL IN FSM_INT- CHECK FOR DECIMALS 
-{
-	int flag = 0;
-
-
-
-	return flag;			//returns 1 if it is a real number 
-}
 
 void Unknown()		//CALL WHEN NOT A TOKEN
 {
