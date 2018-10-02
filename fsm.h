@@ -2,11 +2,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <ctype.h>
 
-
-int FSM_REAL_INT(char*);
-
-int FSM_ID(char*);
+int FSM(char*);
 
 int isKeyword(char*);
 
@@ -14,4 +12,4 @@ int isOperator(char*);
 
 int isSeparator(char*);
 
-void Unknown();
+int Unknown(char);
