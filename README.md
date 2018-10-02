@@ -8,3 +8,5 @@ LEXICAL ANALYSER
 
 -Need to read in input 
     -ignore the comments "[*"  "*]"
+    
+-Need to print out the results.
