@@ -4,4 +4,7 @@
 LEXICAL ANALYSER
 
 
-STILL NEED THE FSM_ID, FSM_INT, FSM_REAL, AND READING IN THE FILE 
+-need to read file. 
+
+-Need to read in input 
+    -ignore the comments "[*"  "*]"
