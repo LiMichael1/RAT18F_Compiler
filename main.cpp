@@ -51,7 +51,6 @@ int main()
 
     }
 
-    x=x
 
     return 0;
 }
