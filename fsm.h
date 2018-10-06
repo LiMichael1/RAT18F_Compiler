@@ -3,13 +3,32 @@
 #include <vector>
 #include <string>
 #include <ctype.h>
+using namespace std;
 
-int FSM(char*);
+struct Token
+{
+    string LexemeName;
+    int TokenType;
+    string TokenName;
+};
 
-int isKeyword(char*);
+vector<Token> lexicalAnalyzer(char*);
 
-int isOperator(char*);
+bool isKeyword(string);
 
-int isSeparator(char*);
+bool isOperator(string);
 
-int Unknown(char);
+bool isSeparator(string);
+
+bool Unknown(char);
+
+Token Id_int_real_helper(int, string);
+
+Token Sep_Op_helper(string);
+
+bool isPunct(int);
+
+int GetCol(char);
+
+string getTokenName(int, string);
+
