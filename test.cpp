@@ -1,155 +1,323 @@
-#include <iostream>
-#include <cstring>
-#include <stdlib.h>
-#include <ctype.h>
+#include "test.h":
+using namespace std;
 
-int Unknown(char buffer)
-{
+int main() {
 
-    if (!isdigit(buffer) && !isalpha(buffer) && buffer != '.' && buffer != '\0')
-    {
-	   printf("Unknown Character: '%c' \n\n", buffer);
-	   return 1;
+	ifstream inFile;
+	string file, input;
 
-    }
-    return 0;
+	cout << "Enter file name: ";
+	getline(cin, file);
+
+	inFile.open(file);
+	if (inFile.fail())
+	{
+		cout << "Invalid file name\n";
+	}
+	vector<Token> tokens;
+	//char arr[] = "x=x-1; ";
+
+	while (getline(inFile, input))
+	{
+		char *test = new char[input.length() + 1];
+		strcpy(test, input.c_str());		// Copy text from file into a character array
+
+		tokens = FSM(test);
+
+		for (size_t i = 0; i < tokens.size(); i++)
+			cout << endl << tokens[i].LexemeName << " " << tokens[i].TokenName << endl << endl;
+
+		delete[] test;
+	}
+
+	inFile.close();
+	system("pause");
+	return 0;
 }
 
 
 
+vector<Token> FSM(char* buffer)
+{//)= operator, 1= separator , 2 =int , 3= real, 4= keyword, 5 = identifer , 6 = unknown
+	enum TRANSITION_STATES
+	{
+		INTEGER = 2,
+		REAL = 4,
+		SINGLE_IDEN = 5,
+		IDENTIFIER = 7,
+		IGNORE = 8
+	};
 
-int FSM(char* buffer)
+	int stateTable[8][3] = {
+	   { SINGLE_IDEN,	INTEGER,	IGNORE },		// STATE 1
+	   { IGNORE,		INTEGER,	3 },				// STATE 2
+	   { IGNORE,		REAL,		IGNORE },		// STATE 3
+	   { IGNORE,		REAL,		IGNORE },		// STATE 4
+	   { IDENTIFIER,	6,			IGNORE },		// STATE 5
+	   { IDENTIFIER,	6,			IGNORE },		// STATE 6
+	   { IDENTIFIER,	6,			IGNORE },		// STATE 7
+	   { IGNORE,		IGNORE,		IGNORE }			// STATE 8
+	};
+
+	int buffer_length = strlen(buffer);
+
+	int currentState = 1;
+
+	vector<Token> Holder;
+
+	string currentHolder;
+
+	for (int i = 0; i < buffer_length; i++)
+	{
+
+		if (isspace(buffer[i])) //upon seeing spaces
+		{
+			//save the previous Token
+			if (currentState != 1)	 //FLUSH
+			{
+				Holder.push_back(Id_int_real_helper(currentState, currentHolder));
+				currentHolder.clear();
+			}
+			currentState = 1;
+			i++;
+		}
+
+
+
+		while (isPunct(buffer[i]))                       //1 char check
+		{
+
+			if (currentState != 1)	 //FLUSH
+			{
+				Holder.push_back(Id_int_real_helper(currentState, currentHolder));
+				currentHolder.clear();
+			}
+
+			currentState = 1;
+
+			currentHolder += buffer[i];
+
+			if (isPunct(buffer[i + 1]))                 //2 char check
+			{
+				Token t, t2, t3;
+
+				string buff = "";
+				buff += buffer[i];
+				buff += buffer[i + 1];
+
+				string buff2 = "";		    //{{
+				buff2 += buffer[i];
+
+				string buff3 = "";		    //{{
+				buff3 += buffer[i + 1];
+
+				t = Sep_Op_helper(buff);
+				t2 = Sep_Op_helper(buff2);
+				t3 = Sep_Op_helper(buff3);
+
+				if (t.TokenType == -1)	    //unknown two char punctuation
+				{
+					if (t2.TokenType != -1 || t3.TokenType != -1) //known one char punctuations
+					{
+						Holder.push_back(t2);
+						Holder.push_back(t3);
+					}
+					else
+					{
+						Holder.push_back(t);
+					}
+				}
+				else
+				{
+					Holder.push_back(t);
+				}
+
+				currentHolder.clear();
+				i = i + 2;
+			}
+			else {
+				string buff = "";
+				buff += buffer[i];
+				Holder.push_back(Sep_Op_helper(buff));		//FLUSH
+				currentHolder.clear();
+				i++;
+			}
+
+		}
+
+		int Column = GetCol(buffer[i]);
+		if (Column != -1)
+		{
+			currentHolder += buffer[i];
+
+			currentState = stateTable[currentState - 1][Column];
+
+			cout << "current state: " << currentState << endl;
+		}
+	}
+
+
+	return Holder;
+}
+
+Token Id_int_real_helper(int state, string LexemeName)//returns Token based on Token
+{
+	Token t;
+	t.LexemeName = LexemeName;
+	t.TokenType = state;
+	t.TokenName = getTokenName(state, LexemeName);
+
+	return t;
+}
+
+Token Sep_Op_helper(string LexemeName)	//returns Token based on separators and operators
+{
+	Token t;
+	if (isSeparator(LexemeName))
+	{
+		t.LexemeName = LexemeName;
+		t.TokenName = "Separators";
+		t.TokenType = 9;
+	}
+	else if (isOperator(LexemeName))
+	{
+		t.LexemeName = LexemeName;
+		t.TokenName = "Operators";
+		t.TokenType = 10;
+	}
+	else
+	{
+		t.LexemeName = LexemeName;
+		t.TokenName = "Unknown";
+		t.TokenType = -1;
+	}
+
+	return t;
+}
+
+bool isPunct(int ch)		  //checks that the punctuation isn't a dot
+{
+	if (ispunct(ch) && ch != '.')
+		return true;
+	else
+		return false;
+}
+
+string getTokenName(int state, string LexemeName)
 {
 
-
-    int buffer_length = strlen(buffer);
-
-    int state = 1;
-
-    for (int i = 0; i < buffer_length; i++)
-    {
-	   switch (state)
-	   {
-	   case 1:
-		  if (isalpha(buffer[i]))
-			 state = 5;
-		  if (isdigit(buffer[i]))
-			 state = 2;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 2:
-		  if (isalpha(buffer[i]))
-			 state = 8;
-		  if (isdigit(buffer[i]))
-			 state = 2;
-		  if (buffer[i] == '.')
-			 state = 3;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 3:
-		  if (isalpha(buffer[i]))
-			 state = 8;
-		  if (isdigit(buffer[i]))
-			 state = 4;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 4:
-		  if (isalpha(buffer[i]))
-			 state = 8;
-		  if (isdigit(buffer[i]))
-			 state = 4;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 5:
-		  if (isalpha(buffer[i]))
-			 state = 7;
-		  if (isdigit(buffer[i]))
-			 state = 6;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 6:
-		  if (isalpha(buffer[i]))
-			 state = 7;
-		  if (isdigit(buffer[i]))
-			 state = 6;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 7:
-		  if (isalpha(buffer[i]))
-			 state = 7;
-		  if (isdigit(buffer[i]))
-			 state = 6;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   case 8:
-		  if (isalpha(buffer[i]))
-			 state = 8;
-		  if (isdigit(buffer[i]))
-			 state = 8;
-		  if (buffer[i] == '.')
-			 state = 8;
-		  if (Unknown(buffer[i]))
-			 return -1;
-		  break;
-	   }
-
-    }
-
-    if (state == 2)
-	   printf("%s is an integer\n\n", buffer);
-    else if (state == 4)
-	   printf("%s is a real number\n\n", buffer);
-    else if (state == 5 || state == 7)
-	   printf("%s is an identifier\n\n", buffer);
-    else
-	   printf("%s is an unknown type\n\n", buffer);
+	switch (state)
+	{
+	case 1: case 3: case 6: case 8:
+		return "Undefined";
+		break;
+	case 2:
+		printf("check");
+		return "Integer";
+		break;
+	case 4: return "Real";
+		break;
+	case 5:
+		printf("check2");
+		return "Identifier";
+		break;
+	case 7:
+		if (isKeyword(LexemeName))
+			return "Keyword";
+		else
+			return "Identifier";
+		break;
+	}
 
 
 }
 
-
-int main()
+int GetCol(char buffer)
 {
+	int enumDigit = -1;
+	// checks for letter
+	if (isalpha(buffer))
+	{
+		printf("letter: %c\n", buffer);
+		enumDigit = 0;
+	}
+	//digits
+	else if (isdigit(buffer))
+	{
+		printf("integer: %c\n", buffer);
+		enumDigit = 1;
+	}
 
-    char a[] = "2.2";
-    char b[] = "222234";
-    char c[] = "2";
-    char d[] = "fewofjewo";
-    char e[] = "sfew87832x";
-    char f[] = "x";
-    char g[] = "x2";
-    char h[] = "x73x832";
-    char j[] = "x$";
+	// checks for a period aka real #
+	else if (buffer == '.')
+	{
+		printf("dot : %c\n", buffer);
+		enumDigit = 2;
+	}
 
-    FSM(a);
-    FSM(b);
-    FSM(c);
-    FSM(d);
-    FSM(e);
-    FSM(f);
-    FSM(g);
-    FSM(h);
-    FSM(j);
+	\
+		return enumDigit;
+}
 
-    system("pause");
-    return 0;
+bool isKeyword(string buffer)	//CALL IN FSM_ID
+
+{	//Feel free to add more if needed
+	vector<string> keywords = {
+	   "if", "ifend", "put", "get", "else",
+	   "while", "whileend", "return", "true", "false"
+	};
+
+	bool flag = false;
+
+	for (size_t i = 0; i < keywords.size(); i++)
+	{
+		if (buffer == keywords[i])
+		{
+			flag = true;
+		}
+	}
+
+	return flag;
+}
+
+
+bool isOperator(string buffer)
+{	//feel free to add if needed
+	vector<string> operators = {
+	   "+", "-", "*", "=", "==", "^=",
+	   ">", "<", "=>", "=<"
+	};
+
+	bool flag = false;
+
+	for (size_t i = 0; i < operators.size(); i++)
+	{
+		if (buffer == operators[i])
+		{
+			flag = true;
+		}
+	}
+
+	return flag;
+
+}
+
+bool isSeparator(string buffer)
+{	//feel free to add more
+	vector<string> separators = {
+	   "$$", " ", ":", ",", ";",
+	   "{","}", "|", "/", "{}"
+	};
+
+	bool flag = false;
+
+	for (size_t i = 0; i < separators.size(); i++)
+	{
+		if (buffer == separators[i])
+		{
+			flag = true;
+		}
+	}
+
+	return flag;
 }
