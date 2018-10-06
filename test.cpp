@@ -151,8 +151,6 @@ vector<Token> FSM(char* buffer)
 			currentHolder += buffer[i];
 
 			currentState = stateTable[currentState - 1][Column];
-
-			cout << "current state: " << currentState << endl;
 		}
 	}
 
@@ -176,13 +174,13 @@ Token Sep_Op_helper(string LexemeName)	//returns Token based on separators and o
 	if (isSeparator(LexemeName))
 	{
 		t.LexemeName = LexemeName;
-		t.TokenName = "Separators";
+		t.TokenName = "Separator";
 		t.TokenType = 9;
 	}
 	else if (isOperator(LexemeName))
 	{
 		t.LexemeName = LexemeName;
-		t.TokenName = "Operators";
+		t.TokenName = "Operator";
 		t.TokenType = 10;
 	}
 	else
@@ -212,13 +210,11 @@ string getTokenName(int state, string LexemeName)
 		return "Undefined";
 		break;
 	case 2:
-		printf("check");
 		return "Integer";
 		break;
 	case 4: return "Real";
 		break;
 	case 5:
-		printf("check2");
 		return "Identifier";
 		break;
 	case 7:
@@ -238,20 +234,17 @@ int GetCol(char buffer)
 	// checks for letter
 	if (isalpha(buffer))
 	{
-		printf("letter: %c\n", buffer);
 		enumDigit = 0;
 	}
 	//digits
 	else if (isdigit(buffer))
 	{
-		printf("integer: %c\n", buffer);
 		enumDigit = 1;
 	}
 
 	// checks for a period aka real #
 	else if (buffer == '.')
 	{
-		printf("dot : %c\n", buffer);
 		enumDigit = 2;
 	}
 
