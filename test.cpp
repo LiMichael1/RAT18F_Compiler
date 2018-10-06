@@ -4,6 +4,7 @@ using namespace std;
 int main() {
 
 	ifstream inFile;
+	ofstream outFile;
 	string file, input;
 
 	cout << "Enter file name: ";
@@ -16,26 +17,27 @@ int main() {
 	}
 	vector<Token> tokens;
 	//char arr[] = "x=x-1; ";
-
+	outFile.open("results.txt");
 	while (getline(inFile, input))
 	{
 		char *test = new char[input.length() + 1];
 		strcpy(test, input.c_str());		// Copy text from file into a character array
 
 		tokens = FSM(test);
-
+		
 		for (size_t i = 0; i < tokens.size(); i++)
-			cout << endl << tokens[i].LexemeName << " " << tokens[i].TokenName << endl << endl;
-
+		{
+			cout << tokens[i].LexemeName << " " << tokens[i].TokenName << endl << endl;
+			outFile << tokens[i].LexemeName << "\t " << tokens[i].TokenName << endl;
+		}
 		delete[] test;
+		
 	}
-
+	outFile.close();
 	inFile.close();
 	system("pause");
 	return 0;
 }
-
-
 
 vector<Token> FSM(char* buffer)
 {//)= operator, 1= separator , 2 =int , 3= real, 4= keyword, 5 = identifer , 6 = unknown
@@ -60,16 +62,13 @@ vector<Token> FSM(char* buffer)
 	};
 
 	int buffer_length = strlen(buffer);
-
 	int currentState = 1;
 
 	vector<Token> Holder;
-
 	string currentHolder;
 
 	for (int i = 0; i < buffer_length; i++)
 	{
-
 		if (isspace(buffer[i])) //upon seeing spaces
 		{
 			//save the previous Token
@@ -82,19 +81,14 @@ vector<Token> FSM(char* buffer)
 			i++;
 		}
 
-
-
 		while (isPunct(buffer[i]))                       //1 char check
 		{
-
 			if (currentState != 1)	 //FLUSH
 			{
 				Holder.push_back(Id_int_real_helper(currentState, currentHolder));
 				currentHolder.clear();
 			}
-
 			currentState = 1;
-
 			currentHolder += buffer[i];
 
 			if (isPunct(buffer[i + 1]))                 //2 char check
@@ -144,7 +138,6 @@ vector<Token> FSM(char* buffer)
 			}
 
 		}
-
 		int Column = GetCol(buffer[i]);
 		if (Column != -1)
 		{
@@ -153,8 +146,6 @@ vector<Token> FSM(char* buffer)
 			currentState = stateTable[currentState - 1][Column];
 		}
 	}
-
-
 	return Holder;
 }
 
@@ -189,7 +180,6 @@ Token Sep_Op_helper(string LexemeName)	//returns Token based on separators and o
 		t.TokenName = "Unknown";
 		t.TokenType = -1;
 	}
-
 	return t;
 }
 
@@ -203,7 +193,6 @@ bool isPunct(int ch)		  //checks that the punctuation isn't a dot
 
 string getTokenName(int state, string LexemeName)
 {
-
 	switch (state)
 	{
 	case 1: case 3: case 6: case 8:
@@ -224,8 +213,6 @@ string getTokenName(int state, string LexemeName)
 			return "Identifier";
 		break;
 	}
-
-
 }
 
 int GetCol(char buffer)
@@ -247,8 +234,6 @@ int GetCol(char buffer)
 	{
 		enumDigit = 2;
 	}
-
-	\
 		return enumDigit;
 }
 
@@ -269,7 +254,6 @@ bool isKeyword(string buffer)	//CALL IN FSM_ID
 			flag = true;
 		}
 	}
-
 	return flag;
 }
 
@@ -290,9 +274,7 @@ bool isOperator(string buffer)
 			flag = true;
 		}
 	}
-
 	return flag;
-
 }
 
 bool isSeparator(string buffer)
@@ -311,6 +293,5 @@ bool isSeparator(string buffer)
 			flag = true;
 		}
 	}
-
 	return flag;
 }
