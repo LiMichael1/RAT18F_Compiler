@@ -3,54 +3,48 @@
 #include <fstream>
 #include "fsm.h"
 
+using namespace std;
 
 //EXPECTED INPUT : SOURCE FILE 
 //EXPECTED OUTPUT: CLASSIFICATION OF THE TOKENS 
 
-int main()
-{
-    char filename[50];
-    printf("Please enter the filename: \n");
+int main() {
 
-    std::cin.getline(filename, 50);
+    ifstream inFile;
+    ofstream outFile;
+    string file, input;
 
-    std::ifstream file(filename);
-    if (!file.is_open())
+
+    cout << "Enter file name: ";
+    getline(cin, file);
+
+    inFile.open(file);
+    if (inFile.fail())
     {
-	   printf("File does not exist or you can't access it\n");
-	   return EXIT_FAILURE;
+	   cout << "Invalid file name\n";
     }
+    vector<Token> tokens;
 
-    while (!file.eof())		//loops until the end of the file
+    bool commentstar = false;
+    bool commentbracket = false;
+
+    outFile.open("results.txt");
+    while (getline(inFile, input))
     {
-	   bool commentBracket = false;
-	   bool commentStar = false;
-	   char buffer;
-	   file.get(buffer);
-	   if (buffer == '[')
-	   {
-		  commentBracket = true;
-	   }
-	   if (commentBracket && buffer == '*')
-	   {
-		  commentStar = true;
-	   }
-	   if (commentBracket && commentStar && buffer == '*')
-	   {
-		  commentStar = false;
-	   }
-	   if (commentBracket && buffer == ']')
-	   {
-		  commentBracket = false;
-	   }
-	   if (!commentBracket && !commentStar)
-	   {
-		  commentBracket = false;
-		  std::cout << FSM(new char(buffer));
-	   }
+	   char *test = new char[input.length() + 1];
+	   strcpy(test, input.c_str());        // Copy text from file into a character array
 
+	   tokens = lexicalAnalyzer(test);
+
+	   for (size_t i = 0; i < tokens.size(); i++)
+	   {
+		  cout << tokens[i].LexemeName << " " << tokens[i].TokenName << endl << endl;
+		  outFile << tokens[i].LexemeName << "\t " << tokens[i].TokenName << endl;
+	   }
+	   delete[] test;
     }
-
-
+    outFile.close();
+    inFile.close();
+    system("pause");
     return 0;
 }
