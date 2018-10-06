@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef FSM_H_
+#define FSM_H_
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -32,3 +36,4 @@ int GetCol(char);
 
 string getTokenName(int, string);
 
+#endif
