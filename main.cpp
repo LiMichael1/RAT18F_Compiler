@@ -7,6 +7,10 @@ using namespace std;
 
 bool comments;
 
+//Group Members: Michael Li , Eric Edelman, Jarrett Chien
+//Class : CPSC 323- 03
+
+
 //EXPECTED INPUT : SOURCE FILE 
 //EXPECTED OUTPUT: CLASSIFICATION OF THE TOKENS 
 
