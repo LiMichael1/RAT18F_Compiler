@@ -4,7 +4,18 @@ real second; [*real integer
 
 *]
 
-boolean (red)=2eeew;
+boolean (red)= 2eeew;
+
+lfew34242l;	
+
+for
+
+2.00
+
+23141412.1321
+21214214
+
+rewrw2321
 
 boolean third; [* boolean value*]
 
