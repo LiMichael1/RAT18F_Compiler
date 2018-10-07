@@ -5,12 +5,10 @@ using namespace std;
 vector<Token> Parser(char* buffer)		
 {
 	int buffer_length = strlen(buffer);		//get length of the input
-
 	int currentState = 1;					//current State
 
-	vector<Token> Holder;					//Holds collection of Tokens
-
-	string currentHolder;					//Holds the current lexeme
+	vector<Token> tokenHolder;					//Holds collection of Tokens
+	string currentLexeme;					//Holds the current lexeme
 
 	for (int i = 0; i < buffer_length; i++)		//loop for checking the input
 	{
@@ -29,49 +27,45 @@ vector<Token> Parser(char* buffer)
 			i += 2;
 		}
 
-
 		// Lexer() function here
 		if (!comments)				//check if it's not comments
 		{
 			if (isspace(buffer[i])) //Upon seeing empty spaces
 			{
-
-				if (currentState != 1)	 //FLUSH FOR lexeme after a space
+				if (currentState != 1)	 //Flush FOR lexeme after a space
 				{
-					Holder.push_back(Id_int_real_helper(currentState, currentHolder));	
+					tokenHolder.push_back(idIntRealHelper(currentState, currentLexeme));	
 				}
 				currentState = 1;
 				i++;
 			}
-			Token t = (Lexer(buffer, currentState, currentHolder, i));
+			Token t = (Lexer(buffer, currentState, currentLexeme, i));
 			if (t.TokenType != -2)		//error checking for not flushing blank spaces or comments
 			{
-				Holder.push_back(t);	
+				tokenHolder.push_back(t);	
 			}
 		}
 	}
-	return Holder;
+	return tokenHolder;
 }
-
 
 //LEXER FUNCTION THAT RETURNS ONE TOKEN 
 Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 {
-
 	int buffer_length = strlen(buffer);
 	while (i < buffer_length)
 	{
 		if (isspace(buffer[i])) //Upon seeing empty spaces
 		{
-			if (currentState != 1)	 //FLUSH
+			if (currentState != 1)	 
 			{
-				return Id_int_real_helper(currentState, currentHolder);
+				return idIntRealHelper(currentState, currentHolder);
 				currentHolder.clear();
 			}
 			currentState = 1;
 			i++;
 		}
-		while (isPunct(buffer[i]))                       //1 char PUNCTUATION check
+		while (isPunct(buffer[i]))                       //1 char punctuation check
 		{
 			// Comments check in the middle of a line
 			if (i + 1 < buffer_length &&
@@ -88,24 +82,21 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 				i += 2;
 			}
 
-
 			// Lexer() function here
 			if (!comments)
 			{
-				if (currentState != 1)	 //FLUSH
+				if (currentState != 1)	 
 				{
 					i--;							//decrements because the for loop in parser functions would skip some tokens 
-					return Id_int_real_helper(currentState, currentHolder);
+					return idIntRealHelper(currentState, currentHolder);
 				}
 
 				currentState = 1;
-
 				currentHolder += buffer[i];					//adds one character to the current holder
 
 				if (isPunct(buffer[i + 1]))                 //2 char punctuation check
 				{
 					Token t, t2;						//tokens
-
 					string buff2 = "";					//one char token for string input into a function
 					buff2 += buffer[i];
 
@@ -116,17 +107,16 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 					}
 					else
 					{
-						t2 = Sep_Op_helper(buff2);			//one individual char Sep/Op token after two punctuations in a row
+						t2 = sepOpHelper(buff2);			//one individual char Sep/Op token after two punctuations in a row
 						return t2;
-
 					}
-
 				}
-				else {				 //1 char punctuation check
+				else								//1 char punctuation check
+				{				
 					string buff = "";
 					buff += buffer[i];
 
-					return Sep_Op_helper(buff);		//FLUSH	 after confirming only one punctuation in a row
+					return sepOpHelper(buff);		//FLUSH	 after confirming only one punctuation in a row
 				}
 			}
 			else
@@ -136,15 +126,13 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 				return t;
 			}
 		}
-
-		int Column = GetCol(buffer[i]);				//get input : " Id, int , . " for FINITE STATE MACHINE
+		int Column = getColumn(buffer[i]);				//get input : " Id, int , . " for FINITE STATE MACHINE
 		if (Column != -1)					//error, so we don't send an incorrect input 
 		{
 			currentHolder += buffer[i];		//adds to currrent holder
 			currentState = stateTable[currentState - 1][Column];	//FINITE STATE MACHINE AT WORK
 			i++;													//increment to go to next character				
 		}
-
 	}	
 	if (currentHolder.empty())				//blank spaces/ new line check 
 	{										//sends a -2 token which will not add to collection of tokens
@@ -153,12 +141,11 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 		t.TokenType = -2;
 		return t;
 	}
-	return Id_int_real_helper(currentState, currentHolder);		//returns once you get an identifier, real number, or integer
-
+	return idIntRealHelper(currentState, currentHolder);		//returns once you get an identifier, real number, or integer
 }
 
 //returns Token based on State
-Token Id_int_real_helper(int state, string LexemeName)
+Token idIntRealHelper(int state, string LexemeName)
 {
 	Token t;
 	t.LexemeName = LexemeName;
@@ -169,7 +156,7 @@ Token Id_int_real_helper(int state, string LexemeName)
 }
 
 //returns Token based on separators and operators | unknown if neither
-Token Sep_Op_helper(string LexemeName)
+Token sepOpHelper(string LexemeName)
 {
 	Token t;
 	if (isSeparator(LexemeName))
@@ -190,7 +177,6 @@ Token Sep_Op_helper(string LexemeName)
 		t.TokenName = "Unknown";
 		t.TokenType = -1;
 	}
-
 	return t;
 }
 
@@ -203,7 +189,6 @@ bool isPunct(int ch)
 //Helper function to find TokenName after you determine the state
 string getTokenName(int state, string LexemeName)
 {
-
 	switch (state)
 	{
 	case 1: case 3: case 6: case 8:
@@ -227,15 +212,13 @@ string getTokenName(int state, string LexemeName)
 		return "Unknown";
 		break;
 	}
-
-
 }
 
-//get the Column : Letter, digit, dot
-int GetCol(char buffer) //returns column number 
+//get the Column: Letter, digit, period
+int getColumn(char buffer) //returns column number 
 {
 	int enumDigit = -1;
-	// checks for letter
+	// checks for letters
 	if (isalpha(buffer))
 	{
 		enumDigit = 0;
@@ -245,15 +228,12 @@ int GetCol(char buffer) //returns column number
 	{
 		enumDigit = 1;
 	}
-
 	// checks for a period aka real #
 	else if (buffer == '.')
 	{
 		enumDigit = 2;
 	}
-
-	\
-		return enumDigit;
+	return enumDigit;
 }
 
 //DETERMINES IF INPUT IS A KEYWORD
@@ -264,9 +244,7 @@ bool isKeyword(string buffer)	//call after determining it's an identifier
 		"while", "whileend", "return", "true", "false",
 		"function", "int", "boolean",
 	};
-
 	bool flag = false;
-
 	for (size_t i = 0; i< keywords.size(); i++)
 	{
 		if (buffer == keywords[i])
@@ -274,7 +252,6 @@ bool isKeyword(string buffer)	//call after determining it's an identifier
 			flag = true;
 		}
 	}
-
 	return flag;
 }
 
@@ -285,9 +262,7 @@ bool isOperator(string buffer)
 		"+", "-", "*", "=", "==", "^=",
 		">", "<", "=>", "=<"
 	};
-
 	bool flag = false;
-
 	for (size_t i = 0; i< operators.size(); i++)
 	{
 		if (buffer == operators[i])
@@ -295,21 +270,17 @@ bool isOperator(string buffer)
 			flag = true;
 		}
 	}
-
 	return flag;
-
 }
 
 //DETERMINES IF INPUT IS A SEPARATOR
 bool isSeparator(string buffer)
-{	//feel free to add more
+{	
 	vector<string> separators = {
 		"$$", " ", ":", ",", ";",
 		"{","}", "|", "/", "(", ")"
 	};
-
 	bool flag = false;
-
 	for (size_t i = 0; i< separators.size(); i++)
 	{
 		if (buffer == separators[i])
@@ -317,7 +288,6 @@ bool isSeparator(string buffer)
 			flag = true;
 		}
 	}
-
 	return flag;
 }
 
@@ -340,9 +310,8 @@ bool isDoubleOp(char firstChar, char secondChar, Token &t)
 			index++;
 		}
 		if (found) {
-			t = Sep_Op_helper(doubleOp);
+			t = sepOpHelper(doubleOp);
 		}
 	}
-
 	return found;
 }
