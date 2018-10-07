@@ -3,10 +3,5 @@
 
 LEXICAL ANALYSER
 
+NEED TO ADD COMMENTS
 
--need to read file. 
-
--Need to read in input 
-    -ignore the comments "[*"  "*]"
-    
--Need to print out the results.
