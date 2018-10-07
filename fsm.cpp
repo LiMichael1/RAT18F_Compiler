@@ -1,61 +1,60 @@
 #include "fsm.h"
 using namespace std;
 
-
-
-vector<Token> Parser(char* buffer)		//lexer machine
+// RETURNS THE TOTAL COLLECTION OF TOKENS BASED ON THE INPUT 
+vector<Token> Parser(char* buffer)		
 {
-	int buffer_length = strlen(buffer);
+	int buffer_length = strlen(buffer);		//get length of the input
 
+	int currentState = 1;					//current State
 
-	int currentState = 1;
+	vector<Token> Holder;					//Holds collection of Tokens
 
-	vector<Token> Holder;
+	string currentHolder;					//Holds the current lexeme
 
-	string currentHolder;
-
-	for (int i = 0; i < buffer_length; i++)
+	for (int i = 0; i < buffer_length; i++)		//loop for checking the input
 	{
-		// Comments check
+		// COMMENT CHECK at the start of a new line
 		if (i + 1 < buffer_length &&
 			buffer[i] == '[' &&
 			buffer[i + 1] == '*')
 		{
-			comments = true;
+			comments = true;				//if you get [*
 		}
 		if (i + 1 < buffer_length &&
 			buffer[i] == '*' &&
 			buffer[i + 1] == ']')
 		{
-			comments = false;
+			comments = false;				//if you get *] after having comments = true
 			i += 2;
 		}
 
 
 		// Lexer() function here
-		if (!comments)
+		if (!comments)				//check if it's not comments
 		{
 			if (isspace(buffer[i])) //Upon seeing empty spaces
 			{
 
-				if (currentState != 1)	 //FLUSH
+				if (currentState != 1)	 //FLUSH FOR lexeme after a space
 				{
-					Holder.push_back(Id_int_real_helper(currentState, currentHolder));
-					currentHolder.clear();
+					Holder.push_back(Id_int_real_helper(currentState, currentHolder));	
 				}
 				currentState = 1;
 				i++;
 			}
 			Token t = (Lexer(buffer, currentState, currentHolder, i));
-			if (t.TokenType != -2)
+			if (t.TokenType != -2)		//error checking for not flushing blank spaces or comments
 			{
-				Holder.push_back(t);
+				Holder.push_back(t);	
 			}
 		}
 	}
 	return Holder;
 }
 
+
+//LEXER FUNCTION THAT RETURNS ONE TOKEN 
 Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 {
 
@@ -72,20 +71,20 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 			currentState = 1;
 			i++;
 		}
-		while (isPunct(buffer[i]))                       //1 char check
+		while (isPunct(buffer[i]))                       //1 char PUNCTUATION check
 		{
-			// Comments check
+			// Comments check in the middle of a line
 			if (i + 1 < buffer_length &&
 				buffer[i] == '[' &&
 				buffer[i + 1] == '*')
 			{
-				comments = true;
+				comments = true;				//true if you get the start of a comment segment: [*
 			}
 			if (i + 1 < buffer_length &&
 				buffer[i] == '*' &&
 				buffer[i + 1] == ']')
 			{
-				comments = false;
+				comments = false;				//false if you get comment = true and the end of a comment segment: *]
 				i += 2;
 			}
 
@@ -95,43 +94,39 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 			{
 				if (currentState != 1)	 //FLUSH
 				{
-					i--;
+					i--;							//decrements because the for loop in parser functions would skip some tokens 
 					return Id_int_real_helper(currentState, currentHolder);
-					currentHolder.clear();
 				}
 
 				currentState = 1;
 
-				currentHolder += buffer[i];
+				currentHolder += buffer[i];					//adds one character to the current holder
 
 				if (isPunct(buffer[i + 1]))                 //2 char punctuation check
 				{
-					Token t, t2, t3;
+					Token t, t2;						//tokens
 
-					string buff2 = "";
+					string buff2 = "";					//one char token for string input into a function
 					buff2 += buffer[i];
 
 					if (isDoubleOp(buffer[i], buffer[i + 1], t))
 					{
 						i++;
-						return t;
+						return t;							//two char Separator/Operator token
 					}
 					else
 					{
-						t2 = Sep_Op_helper(buff2);
+						t2 = Sep_Op_helper(buff2);			//one individual char Sep/Op token after two punctuations in a row
 						return t2;
 
 					}
-					currentHolder.clear();
 
 				}
 				else {				 //1 char punctuation check
 					string buff = "";
 					buff += buffer[i];
-					//i++;
-					return Sep_Op_helper(buff);		//FLUSH
-					currentHolder.clear();
 
+					return Sep_Op_helper(buff);		//FLUSH	 after confirming only one punctuation in a row
 				}
 			}
 			else
@@ -142,23 +137,23 @@ Token Lexer(char* buffer, int currentState, string currentHolder, int& i)
 			}
 		}
 
-		int Column = GetCol(buffer[i]);
-		if (Column != -1)
+		int Column = GetCol(buffer[i]);				//get input : " Id, int , . " for FINITE STATE MACHINE
+		if (Column != -1)					//error, so we don't send an incorrect input 
 		{
-			currentHolder += buffer[i];
-			currentState = stateTable[currentState - 1][Column];
-			i++;												//FINITE STATE MACHINE AT WORK
+			currentHolder += buffer[i];		//adds to currrent holder
+			currentState = stateTable[currentState - 1][Column];	//FINITE STATE MACHINE AT WORK
+			i++;													//increment to go to next character				
 		}
 
-	}
-	if (currentHolder.empty())
-	{
+	}	
+	if (currentHolder.empty())				//blank spaces/ new line check 
+	{										//sends a -2 token which will not add to collection of tokens
 		currentState = 1;
 		Token t;
 		t.TokenType = -2;
 		return t;
 	}
-	return Id_int_real_helper(currentState, currentHolder);
+	return Id_int_real_helper(currentState, currentHolder);		//returns once you get an identifier, real number, or integer
 
 }
 
@@ -326,6 +321,7 @@ bool isSeparator(string buffer)
 	return flag;
 }
 
+//double Operator or Separator check 
 bool isDoubleOp(char firstChar, char secondChar, Token &t)
 {
 	vector<string> doubleOpList = { "==", "$$", "<=", ">=", "!=", "^=" };

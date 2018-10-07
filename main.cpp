@@ -12,40 +12,38 @@ bool comments;
 
 int main() {
 
-	ifstream inFile;
-	ofstream outFile;
-	string file, input;
+	ifstream inFile;				//STORES THE INPUT FILE 
+	ofstream outFile;				//STORES THE OUTPUT FILE 
+	string file, input;				//STORES THE FILENAME AND THE FILE INPUT 
 
 
 	cout << "Enter file name: ";
-	getline(cin, file);
+	getline(cin, file);					//GETS FILENAME
 
-	inFile.open(file);
-	if (inFile.fail())
+	inFile.open(file);					//OPENS FILENAME
+	if (inFile.fail())					//ERROR CHECKING IF YOU CAN'T OPEN THE FILE 
 	{
 		cout << "Invalid file name\n";
 	}
-	vector<Token> tokens;
+	vector<Token> tokens;				//STORES COLLECTION OF TOKENS
 
-	file = "";
+	file = "";							
 
 
-	outFile.open("results.txt");
-	while (getline(inFile, input))
+	outFile.open("results.txt");		//OUTPUT FILE
+	while (getline(inFile, input))			//GET INPUT LINE BY LINE 
 	{
 		char *test = &*input.begin();
-		//strcpy_s(test, input.length(), input.c_str());        // Copy text from file into a character array
+		tokens = Parser(test);				//GET TOKENS 
 
-		tokens = Parser(test);
-
-		for (size_t i = 0; i < tokens.size(); i++)
+		for (size_t i = 0; i < tokens.size(); i++)	//OUTPUT 
 		{
 			cout << left << setw(15) << tokens[i].LexemeName << setw(15) << tokens[i].TokenName << endl << endl;
 			outFile << left << setw(15) << tokens[i].LexemeName << setw(15) << tokens[i].TokenName << endl;
 		}
 
 	}
-	outFile.close();
+	outFile.close();				//CLOSE THE INPUT/OUTPUT FILES 
 	inFile.close();
 	system("pause");
 	return 0;

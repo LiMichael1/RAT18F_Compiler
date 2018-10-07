@@ -10,6 +10,7 @@
 extern bool comments;
 using namespace std;
 
+//TOKEN STRUCTURE 
 struct Token
 {
 	string LexemeName;
@@ -17,7 +18,7 @@ struct Token
 	string TokenName;
 };
 
-enum TRANSITION_STATES
+enum TRANSITION_STATES			//FOR THE FINITE STATE MACHINE
 {
 	INTEGER = 2,
 	REAL = 4,
@@ -26,8 +27,8 @@ enum TRANSITION_STATES
 	IGNORE = 8
 };
 
-
-const int stateTable[8][3] = {
+//FINITE STATE MACHINE 
+const int stateTable[8][3] = {			
 	{ SINGLE_IDEN,	INTEGER,	IGNORE },			// STATE 1
 	{ IGNORE,		INTEGER,	3 },				// STATE 2
 	{ IGNORE,		REAL,		IGNORE },		// STATE 3
