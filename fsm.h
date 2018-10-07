@@ -7,24 +7,49 @@
 #include <vector>
 #include <string>
 #include <ctype.h>
+extern bool comments;
 using namespace std;
 
 struct Token
 {
-    string LexemeName;
-    int TokenType;
-    string TokenName;
+	string LexemeName;
+	int TokenType;
+	string TokenName;
 };
 
-vector<Token> lexicalAnalyzer(char*);
+enum TRANSITION_STATES
+{
+	INTEGER = 2,
+	REAL = 4,
+	SINGLE_IDEN = 5,
+	IDENTIFIER = 7,
+	IGNORE = 8
+};
+
+
+const int stateTable[8][3] = {
+	{ SINGLE_IDEN,	INTEGER,	IGNORE },			// STATE 1
+	{ IGNORE,		INTEGER,	3 },				// STATE 2
+	{ IGNORE,		REAL,		IGNORE },		// STATE 3
+	{ IGNORE,		REAL,		IGNORE },		// STATE 4
+	{ IDENTIFIER,	6,			IGNORE },		// STATE 5
+	{ IDENTIFIER,	6,			IGNORE },		// STATE 6
+	{ IDENTIFIER,	6,			IGNORE },		// STATE 7
+	{ IGNORE,		IGNORE,		IGNORE }		// STATE 8
+};
+
+
+Token Lexer(char* buffer, int currentState, string currentHolder, int& i);
+
+bool isDoubleOp(char, char, Token&);
+
+vector<Token> Parser(char*);
 
 bool isKeyword(string);
 
 bool isOperator(string);
 
 bool isSeparator(string);
-
-bool Unknown(char);
 
 Token Id_int_real_helper(int, string);
 
