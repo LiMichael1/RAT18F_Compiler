@@ -29,8 +29,8 @@ enum TRANSITION_STATES			//FOR THE FINITE STATE MACHINE
 
 //FINITE STATE MACHINE 
 const int stateTable[8][3] = {			
-	{ SINGLE_IDEN,	INTEGER,	IGNORE },			// STATE 1
-	{ IGNORE,		INTEGER,	3 },				// STATE 2
+	{ SINGLE_IDEN,	INTEGER,	IGNORE },		// STATE 1
+	{ IGNORE,		INTEGER,	3 },			// STATE 2
 	{ IGNORE,		REAL,		IGNORE },		// STATE 3
 	{ IGNORE,		REAL,		IGNORE },		// STATE 4
 	{ IDENTIFIER,	6,			IGNORE },		// STATE 5
@@ -52,13 +52,13 @@ bool isOperator(string);
 
 bool isSeparator(string);
 
-Token Id_int_real_helper(int, string);
+Token idIntRealHelper(int, string);
 
-Token Sep_Op_helper(string);
+Token sepOpHelper(string);
 
 bool isPunct(int);
 
-int GetCol(char);
+int getColumn(char);
 
 string getTokenName(int, string);
 
