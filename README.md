@@ -1,10 +1,11 @@
-# CPSC323_Proj1
+# CPSC323_Proj2
 
 Group Members : Michael Li, Jarrett Chien, Eric Edelman
 
 Class : CPSC 323-03
 
-LEXICAL ANALYZER
+Parser
+
 
 
 
