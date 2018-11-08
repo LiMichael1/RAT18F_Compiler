@@ -10,7 +10,7 @@ Token nextToken()		//???
 	//return ((i == 0) ? v[i] : v[++i]);
 }
 
-void Rat18F() 
+bool Rat18F() 
 {
 	//use syntax rules and call functions
 	Opt_func_def();
@@ -22,14 +22,14 @@ void Rat18F()
 
 
 }
-void Opt_func_def()
+bool Opt_func_def()
 {
 	if ()
 		Func_def();
 	else if()		//or
 		Empty();
 }
-void Func_def() 
+bool Func_def() 
 {
 	if ()
 		Function();
@@ -39,7 +39,7 @@ void Func_def()
 		Func_def();
 	}
 }
-void Function() 
+bool Function() 
 {
 	if (nextToken().LexemeName == "function")
 	if(nextToken().TokenName == "Identifier")
@@ -50,14 +50,14 @@ void Function()
 	Body();
 
 }
-void Opt_para_list() 
+bool Opt_para_list() 
 {
 	if ()
 		Parameter();
 	else if ()		//or
 		Empty();
 }
-void Para_list()
+bool Para_list()
 {
 	if ()
 		Parameter();
@@ -66,7 +66,7 @@ void Para_list()
 		if (nextToken().LexemeName == ",")
 		Para_list();
 }
-void Parameter()
+bool Parameter()
 {
 	if (nextToken().TokenName == "Identifier")
 
@@ -74,7 +74,7 @@ void Parameter()
 
 	Qualifier();
 }
-void Qualifier()
+bool Qualifier()
 {
 	if (nextToken().LexemeName == "int")
 
@@ -83,20 +83,20 @@ void Qualifier()
 	else if (nextToken().LexemeName == "real")//or
 
 }
-void Body()
+bool Body()
 {
 	if (nextToken().LexemeName == "{")
 	Statement_list();
 	if (nextToken().LexemeName == "}")
 }
-void Opt_dec_list()
+bool Opt_dec_list()
 {
 	if ()
 		Dec_list();
 	else if()		//or
 		Empty();
 }
-void Dec_list()
+bool Dec_list()
 {
 	if ()
 	{
@@ -110,12 +110,12 @@ void Dec_list()
 		Dec_list();
 	}
 }
-void Dec()
+bool Dec()
 {
 	Qualifier();
 	IDs();
 }
-void IDs()
+bool IDs()
 {
 	if (nextToken().TokenName == "Identifier")
 		//or
@@ -123,14 +123,14 @@ void IDs()
 	IDs();
 
 }
-void Statement_list()
+bool Statement_list()
 {
 	Statement();
 	//or 
 	Statement();
 	Statement_list();
 }
-void Statement()
+bool Statement()
 {
 	Compound();
 	//or
@@ -147,19 +147,19 @@ void Statement()
 	While();
 
 }
-void Compound()//same as Body?
+bool Compound()//same as Body?
 {
 	if (nextToken().LexemeName == "{")
 	Statement_list();
 	if (nextToken().LexemeName == "}")
 }
-void Assign()
+bool Assign()
 {
 	if (nextToken().TokenName == "Identifier")
 	if (nextToken().LexemeName == "=")
 	Expression();
 }
-void If()
+bool If()
 {
 	if (nextToken().LexemeName == "if")
 	if (nextToken().LexemeName == "(")
@@ -179,7 +179,7 @@ void If()
 	if (nextToken().LexemeName == "ifend")
 
 }
-void Return()
+bool Return()
 {
 	if (nextToken().LexemeName == "return")
 	if (nextToken().LexemeName == ";")
@@ -188,7 +188,7 @@ void Return()
 		Expression();
 			if (nextToken().LexemeName == ";")
 }
-void Print()
+bool Print()
 {
 	if (nextToken().LexemeName == "put")
 	if (nextToken().LexemeName == "(")
@@ -196,7 +196,7 @@ void Print()
 	if (nextToken().LexemeName == ")")
 	if (nextToken().LexemeName == ";")
 }
-void Scan()
+bool Scan()
 {
 	if (nextToken().LexemeName == "get")
 	if (nextToken().LexemeName == "(")
@@ -204,7 +204,7 @@ void Scan()
 	if (nextToken().LexemeName == ")")
 	if (nextToken().LexemeName == ";")
 }
-void While()
+bool While()
 {
 	if (nextToken().LexemeName == "while")
 	if (nextToken().LexemeName == "(")
@@ -213,13 +213,13 @@ void While()
 	Statement();
 	if (nextToken().LexemeName == "whileend")
 }
-void Condition()
+bool Condition()
 {
 	Expression();
 	Relop();
 	Expression();
 }
-void Relop()
+bool Relop()
 {
 	if (nextToken().LexemeName == "==")
 		//or
@@ -233,12 +233,12 @@ void Relop()
 		//or
 	else if (nextToken().LexemeName == "<=")
 }
-void Expression()
+bool Expression()
 {
 	Term();
 	ExpressionPrime();
 }
-void ExpressionPrime()
+bool ExpressionPrime()
 {
 	if (nextToken().LexemeName == "+")
 		Term();
@@ -251,12 +251,12 @@ void ExpressionPrime()
 	else
 		Empty();
 }
-void Term()
+bool Term()
 {
 	Factor();
 	TermPrime();
 }
-void TermPrime()
+bool TermPrime()
 {
 	if (nextToken().LexemeName == "*")
 		Factor();
@@ -268,35 +268,60 @@ void TermPrime()
 	else
 		Empty();
 }
-void Factor()
+bool Factor()
 {
 	if (nextToken().LexemeName == "-")
 	Primary();
 	//or 
 	Primary();
 }
-void Primary()
+bool Primary()
 {
-		if (nextToken().TokenName == "Identifier")
-		//or
-		if (nextToken().TokenName == "Integer")
-		//or
-		if (nextToken().TokenName == "Identifier")
+	if (nextToken().TokenName == "Identifier")
+	{
 		if (nextToken().LexemeName == "(")
-		IDs();
-		if (nextToken().LexemeName == ")")
+		{
+			IDs();
+			if (nextToken().LexemeName == ")")
+		}
+		else
+		{
+			printf("<Primary> ::= <Identifier>\n");
+			return true;
+		}
+	}
+	//or
+	else if (nextToken().TokenName == "Integer")
+	{ 
+		printf("<Primary> ::= <Integer>\n");
+		return true;
+	}	
 		//or
-		if (nextToken().LexemeName == "(")
+	else if (nextToken().LexemeName == "(")
+	{
 		Expression();
 		if (nextToken().LexemeName == ")")
+	}
 		//or
-		if (nextToken().TokenName == "Real")
+	else if (nextToken().TokenName == "Real")
+	{
+		printf("<Primary> ::= <Real>\n");
+		return true;
+	}
 		//or
-		if (nextToken().LexemeName == "true")
+	else if (nextToken().LexemeName == "true")
+	{
+		printf("<Primary> ::= true\n");
+		return true;
+	}
 		//or
-		if (nextToken().LexemeName == "false")
+	else if (nextToken().LexemeName == "false")
+	{
+		printf("<Primary> ::= false\n");
+		return true;
+	}
 }
-void Empty()
+bool Empty()
 {
 
 }
