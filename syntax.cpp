@@ -12,6 +12,8 @@ Token nextToken()		//???
 
 bool Rat18F() 
 {
+	return Opt_func_def() &&
+		   
 	//use syntax rules and call functions
 	Opt_func_def();
 	if (nextToken().LexemeName == "$$")
@@ -24,9 +26,11 @@ bool Rat18F()
 }
 bool Opt_func_def()
 {
-	if ()
-		Func_def();
-	else if()		//or
+	printf("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$\n");
+	if (Func_def())
+	
+		
+	else if(Empty())		//or
 		Empty();
 }
 bool Func_def() 
@@ -277,8 +281,10 @@ bool Factor()
 }
 bool Primary()
 {
-	if (nextToken().TokenName == "Identifier")
+	Token t = nextToken();
+	if (t.TokenName == "Identifier")
 	{
+		
 		if (nextToken().LexemeName == "(")
 		{
 			IDs();
@@ -291,33 +297,37 @@ bool Primary()
 		}
 	}
 	//or
-	else if (nextToken().TokenName == "Integer")
+	else if (t.TokenName == "Integer")
 	{ 
 		printf("<Primary> ::= <Integer>\n");
+		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
 		return true;
 	}	
 		//or
-	else if (nextToken().LexemeName == "(")
+	else if (t.LexemeName == "(")
 	{
 		Expression();
 		if (nextToken().LexemeName == ")")
 	}
 		//or
-	else if (nextToken().TokenName == "Real")
+	else if (t.TokenName == "Real")
 	{
 		printf("<Primary> ::= <Real>\n");
+		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "true")
+	else if (t.LexemeName == "true")
 	{
 		printf("<Primary> ::= true\n");
+		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "false")
+	else if (t.LexemeName == "false")
 	{
 		printf("<Primary> ::= false\n");
+		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
 		return true;
 	}
 }

@@ -3,37 +3,42 @@
 #define SYNTAX_H
 
 //could put it in a class if you want. 
+class Parser {
+private:
+	Token currToken;
+	Token nextToken();
 
-void Rat18F();
-void Opt_func_def();
-void Func_def();
-void Function();
-void Opt_para_list();
-void Para_list();
-void Parameter();
-void Qualifier();
-void Body();
-void Opt_dec_list();
-void Dec_list();
-void Dec();
-void IDs();
-void Statement_list();
-void Statement();
-void Compound();
-void Assign();
-void If();
-void Return();
-void Print();
-void Scan();
-void While();
-void Condition();
-void Relop();
-void Expression();
-void ExpressionPrime();
-void Term();
-void TermPrime();
-void Factor();
-void Primary();
-void Empty();
-
+public:
+	bool Rat18F();
+	bool Opt_func_def();
+	bool Func_def();
+	bool Function();
+	bool Opt_para_list();
+	bool Para_list();
+	bool Parameter();
+	bool Qualifier();
+	bool Body();
+	bool Opt_dec_list();
+	bool Dec_list();
+	bool Dec();
+	bool IDs();
+	bool Statement_list();
+	bool Statement();
+	bool Compound();
+	bool Assign();
+	bool If();
+	bool Return();
+	bool Print();
+	bool Scan();
+	bool While();
+	bool Condition();
+	bool Relop();
+	bool Expression();
+	bool ExpressionPrime();
+	bool Term();
+	bool TermPrime();
+	bool Factor();
+	bool Primary();
+	bool Empty();
+};
 #endif
