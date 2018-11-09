@@ -43,16 +43,17 @@ bool Func_def()
 		Func_def();
 	}
 }
-bool Function() 
+bool Function()
 {
 	if (nextToken().LexemeName == "function")
-	if(nextToken().TokenName == "Identifier")
-	if (nextToken().LexemeName == "{")
-	Opt_para_list();
-	if (nextToken().LexemeName == "}")
-	Opt_dec_list();
-	Body();
-
+	{
+		if (nextToken().TokenName == "Identifier")
+			if (nextToken().LexemeName == "{")
+				Opt_para_list();
+		if (nextToken().LexemeName == "}")
+			Opt_dec_list();
+		Body();
+	}
 }
 bool Opt_para_list() 
 {
@@ -219,65 +220,107 @@ bool While()
 }
 bool Condition()
 {
+	printf("<Condition> ::= <Expression> <Relop> <Expression>\n");
 	Expression();
 	Relop();
 	Expression();
 }
 bool Relop()
 {
-	if (nextToken().LexemeName == "==")
+	Token t = nextToken();
+	if (t.LexemeName == "==")
+	{
+		printf("<Relop> ::= ==\n");
+		printf("Match %s and ==\n", t.LexemeName);
+		return true;
+	}
 		//or
 	else if (nextToken().LexemeName == "^=")
+	{
+		printf("<Relop> ::= ^=\n");
+		printf("Match %s and ^=\n", t.LexemeName);
+		return true;
+	}
 		//or
 	else if (nextToken().LexemeName == ">")
+	{
+		printf("<Relop> ::= >\n");
+		printf("Match %s and >\n", t.LexemeName);
+		return true;
+	}
 		//or
 	else if (nextToken().LexemeName == "<")
+	{
+		printf("<Relop> ::= <\n");
+		printf("Match %s and <\n", t.LexemeName);
+		return true;
+	}
 		//or
 	else if (nextToken().LexemeName == "=>")
+	{
+		printf("<Relop> ::= =>\n");
+		printf("Match %s and =>\n", t.LexemeName);
+		return true;
+	}
 		//or
 	else if (nextToken().LexemeName == "<=")
+	{
+		printf("<Relop> ::= <=\n");
+		printf("Match %s and <=\n", t.LexemeName);
+		return true;
+	}
+	//error message 
+	printf("No Match for <Relop>\n");
+	return false;
+
 }
 bool Expression()
 {
-	Term();
-	ExpressionPrime();
+	printf("<Expression> ::= <Term> <Expression>'\n");
+	return Term() && ExpressionPrime();
 }
 bool ExpressionPrime()
 {
-	if (nextToken().LexemeName == "+")
-		Term();
-		ExpressionPrime();
-	//or
-	else if (nextToken().LexemeName == "-")
-		Term();
-		ExpressionPrime();
+	Token t = nextToken();
+	if (t.LexemeName == "+" || t.LexemeName == "-")
+	{
+		printf("<Expression>' ::= %s<Term>\n", t.LexemeName);
+		return Term() && ExpressionPrime();
+	}
 	//or
 	else
 		Empty();
 }
 bool Term()
 {
-	Factor();
-	TermPrime();
+	printf("<Term> ::= <Factor> <Term>'\n");
+	return Factor() && TermPrime();
 }
 bool TermPrime()
 {
-	if (nextToken().LexemeName == "*")
-		Factor();
-	TermPrime();
-	//or
-	else if (nextToken().LexemeName == "/")
-		Factor();
-	TermPrime();
-	else
+	Token t = nextToken();
+	if (t.LexemeName == "*" || t.LexemeName == "/")
+	{
+		printf("<Term>' ::= %s<Factor><Term>\n", t.LexemeName);
+		return Factor() && TermPrime();
+	}
+	else //changable 
 		Empty();
 }
 bool Factor()
 {
-	if (nextToken().LexemeName == "-")
-	Primary();
-	//or 
-	Primary();
+	Token t = nextToken();
+	if (t.LexemeName == "-")
+	{
+		printf("<Factor> ::= -<Primary>\n");
+		printf("Match %s and -\n", currToken.LexemeName);
+		return Primary();
+	}
+	else if (Primary())
+	{
+		printf("<Factor> ::= <Primary>\n");
+	}
+	
 }
 bool Primary()
 {
@@ -287,8 +330,13 @@ bool Primary()
 		
 		if (nextToken().LexemeName == "(")
 		{
-			IDs();
-			if (nextToken().LexemeName == ")")
+			if (IDs())
+			{
+				if (nextToken().LexemeName == ")")
+				{
+
+				}
+			}
 		}
 		else
 		{
@@ -306,8 +354,13 @@ bool Primary()
 		//or
 	else if (t.LexemeName == "(")
 	{
-		Expression();
-		if (nextToken().LexemeName == ")")
+		if (Expression())
+		{
+			if (nextToken().LexemeName == ")")
+			{
+
+			}
+		}
 	}
 		//or
 	else if (t.TokenName == "Real")
@@ -329,6 +382,11 @@ bool Primary()
 		printf("<Primary> ::= false\n");
 		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
 		return true;
+	}
+	else
+	{
+		printf("No Match for <Primary>\n")
+		return false;
 	}
 }
 bool Empty()
