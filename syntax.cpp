@@ -81,18 +81,33 @@ bool Parameter()
 }
 bool Qualifier()
 {
-	if (nextToken().LexemeName == "int")
-
-	else if (nextToken().LexemeName == "boolean")//or
-		
-	else if (nextToken().LexemeName == "real")//or
+	Token t = nextToken();
+	if (t.LexemeName == "int")
+	{
+		printf("Match %s and %s:int", t.LexemeName , t.TokenName);
+		return true;
+	}
+	else if (t.LexemeName == "boolean")//or
+	{
+		printf("Match %s and %s:boolean", t.LexemeName , t.TokenName);
+		return true;
+	}	
+	else if (t.LexemeName == "real")//or
+	{
+		printf("Match %s and %s:real", t.LexemeName , t.TokenName);
+		return true;
+	}
 
 }
 bool Body()
 {
 	if (nextToken().LexemeName == "{")
-	Statement_list();
-	if (nextToken().LexemeName == "}")
+	{
+		if(Statement_list())
+		{
+			if (nextToken().LexemeName == "}")
+		}
+	}
 }
 bool Opt_dec_list()
 {
