@@ -10,20 +10,40 @@ Token nextToken()		//???
 	//return ((i == 0) ? v[i] : v[++i]);
 }
 
+bool Match(Token t)
+{
+
+	if(t.LexemeName == currToken.LexemeName)
+	{
+		printf("Match %s and %s:%s\n", t.LexemeName, currToken.TokenName, currToken.LexemeName);
+		return true;
+	}
+	else
+	{
+		printf("No Match for %s\n", t.LexemeName);
+		return false;
+	}
+}
+bool check_input(Token t)
+{
+	return t.LexemeName == currToken.LexemeName;
+}
+
+//<Rat18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
 bool Rat18F() 
 {
 	return Opt_func_def() &&
 		   
-	//use syntax rules and call functions
+	
 	Opt_func_def();
 	if (nextToken().LexemeName == "$$")
 	Opt_dec_list();
 	Statement_list();
 	if (nextToken().LexemeName == "$$")
 	//Accepting State
-
-
 }
+
+//<Opt Function Definitions> ::= <Function Definitions> | <Empty>
 bool Opt_func_def()
 {
 	printf("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$\n");
@@ -33,6 +53,8 @@ bool Opt_func_def()
 	else if(Empty())		//or
 		Empty();
 }
+
+//<Function Definitions> ::= <Function> | <Function> <Function Definitions>
 bool Func_def() 
 {
 	if ()
@@ -43,6 +65,7 @@ bool Func_def()
 		Func_def();
 	}
 }
+//<Function> ::= function <Identifier> ( <Opt Parameter List>) <Opt Declaration List> <Body>
 bool Function()
 {
 	if (nextToken().LexemeName == "function")
@@ -55,6 +78,7 @@ bool Function()
 		Body();
 	}
 }
+//<Opt Parameter List> ::= <Parameter List> | <Empty>
 bool Opt_para_list() 
 {
 	if ()
@@ -62,6 +86,7 @@ bool Opt_para_list()
 	else if ()		//or
 		Empty();
 }
+//<Parameter List> ::= <Parameter> | <Parameter> , <Parameter List>
 bool Para_list()
 {
 	if ()
@@ -71,6 +96,7 @@ bool Para_list()
 		if (nextToken().LexemeName == ",")
 		Para_list();
 }
+//<Parameter> ::= <IDs > : <Qualifier>
 bool Parameter()
 {
 	if (nextToken().TokenName == "Identifier")
@@ -79,6 +105,7 @@ bool Parameter()
 
 	Qualifier();
 }
+//<Qualifier> ::= int | boolean | real
 bool Qualifier()
 {
 	Token t = nextToken();
@@ -99,6 +126,7 @@ bool Qualifier()
 	}
 
 }
+//<Body> ::= { < Statement List> }
 bool Body()
 {
 	if (nextToken().LexemeName == "{")
@@ -109,6 +137,7 @@ bool Body()
 		}
 	}
 }
+//<Opt Declaration List> ::= <Declaration List> | <Empty>
 bool Opt_dec_list()
 {
 	if ()
@@ -116,6 +145,7 @@ bool Opt_dec_list()
 	else if()		//or
 		Empty();
 }
+//<Declaration List> := <Declaration> ; | <Declaration> ; <Declaration List>
 bool Dec_list()
 {
 	if ()
@@ -130,11 +160,13 @@ bool Dec_list()
 		Dec_list();
 	}
 }
+//<Declaration> ::= <Qualifier > <IDs>
 bool Dec()
 {
 	Qualifier();
 	IDs();
 }
+//<IDs> ::= <Identifier> | <Identifier>, <IDs>
 bool IDs()
 {
 	if (nextToken().TokenName == "Identifier")
@@ -143,6 +175,7 @@ bool IDs()
 	IDs();
 
 }
+//<Statement List> ::= <Statement> | <Statement> <Statement List>
 bool Statement_list()
 {
 	Statement();
@@ -150,6 +183,7 @@ bool Statement_list()
 	Statement();
 	Statement_list();
 }
+//<Statement> ::= <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
 bool Statement()
 {
 	Compound();
@@ -167,18 +201,22 @@ bool Statement()
 	While();
 
 }
+//<Compound> ::= { <Statement List> }
 bool Compound()//same as Body?
 {
 	if (nextToken().LexemeName == "{")
 	Statement_list();
 	if (nextToken().LexemeName == "}")
 }
+//<Assign> ::= <Identifier> = <Expression> ;
 bool Assign()
 {
 	if (nextToken().TokenName == "Identifier")
 	if (nextToken().LexemeName == "=")
 	Expression();
 }
+//<If> ::= if ( <Condition> ) <Statement> ifend |
+//         if ( <Condition> ) <Statement> else <Statement> ifend
 bool If()
 {
 	if (nextToken().LexemeName == "if")
@@ -199,6 +237,7 @@ bool If()
 	if (nextToken().LexemeName == "ifend")
 
 }
+//<Return> ::= return ; | return <Expression> ;
 bool Return()
 {
 	if (nextToken().LexemeName == "return")
@@ -208,14 +247,18 @@ bool Return()
 		Expression();
 			if (nextToken().LexemeName == ";")
 }
+//<Print> ::= put ( <Expression>);
 bool Print()
 {
 	if (nextToken().LexemeName == "put")
-	if (nextToken().LexemeName == "(")
-	Expression();
-	if (nextToken().LexemeName == ")")
-	if (nextToken().LexemeName == ";")
+	{
+		if (nextToken().LexemeName == "(")
+			Expression();
+		if (nextToken().LexemeName == ")")
+		if (nextToken().LexemeName == ";")
+	}
 }
+//<Scan> ::= get ( <IDs> );
 bool Scan()
 {
 	if (nextToken().LexemeName == "get")
@@ -224,6 +267,7 @@ bool Scan()
 	if (nextToken().LexemeName == ")")
 	if (nextToken().LexemeName == ";")
 }
+//<While> ::= while ( <Condition> ) <Statement> whileend
 bool While()
 {
 	if (nextToken().LexemeName == "while")
@@ -233,13 +277,15 @@ bool While()
 	Statement();
 	if (nextToken().LexemeName == "whileend")
 }
+//<Condition> ::= <Expression> <Relop> <Expression>
 bool Condition()
 {
-	printf("<Condition> ::= <Expression> <Relop> <Expression>\n");
+	printf("<Condition> ::= <Express//ion> <Relop> <Expression>\n");
 	Expression();
 	Relop();
 	Expression();
 }
+//<Relop> ::= == | ^= | > |<  | => |=<
 bool Relop()
 {
 	Token t = nextToken();
@@ -289,11 +335,13 @@ bool Relop()
 	return false;
 
 }
+//<Expression> ::= <Term> <Expression>’
 bool Expression()
 {
 	printf("<Expression> ::= <Term> <Expression>'\n");
 	return Term() && ExpressionPrime();
 }
+//R26. <Expression>’ ::= +<Term> <Expression>’ | -<Term> <Expression>’ | empty
 bool ExpressionPrime()
 {
 	Token t = nextToken();
@@ -306,11 +354,13 @@ bool ExpressionPrime()
 	else
 		Empty();
 }
+// <Term> = <Factor> <Term>'
 bool Term()
 {
 	printf("<Term> ::= <Factor> <Term>'\n");
 	return Factor() && TermPrime();
 }
+// <Term>’ ::= * <Factor> <Term>’ | / <Factor> <Term>’ | empty
 bool TermPrime()
 {
 	Token t = nextToken();
@@ -322,6 +372,7 @@ bool TermPrime()
 	else //changable 
 		Empty();
 }
+//<Factor> ::= - <Primary> | <Primary>
 bool Factor()
 {
 	Token t = nextToken();
@@ -334,9 +385,16 @@ bool Factor()
 	else if (Primary())
 	{
 		printf("<Factor> ::= <Primary>\n");
+		return true;
+	}
+	else
+	{
+		printf("No Match for Factor");
+		return false;
 	}
 	
 }
+//<Primary> ::= <Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) | <Real> | true | false
 bool Primary()
 {
 	Token t = nextToken();
@@ -404,6 +462,7 @@ bool Primary()
 		return false;
 	}
 }
+//<Empty> ::= empty
 bool Empty()
 {
 
