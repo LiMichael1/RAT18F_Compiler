@@ -5,12 +5,20 @@
 
 using namespace std;
 
-Token nextToken()		//???
+//get linenumber for the print functions??
+
+Token Syntax::nextToken()		//???
 {
 	//return ((i == 0) ? v[i] : v[++i]);
+	//updates current token
 }
 
-bool Match(Token t)
+bool Syntax::Accept ()
+{
+
+}
+
+bool Syntax::Match(Token t)
 {
 
 	if(t.LexemeName == currToken.LexemeName)
@@ -24,13 +32,13 @@ bool Match(Token t)
 		return false;
 	}
 }
-bool check_input(Token t)
+bool Syntax::check_input(Token t)
 {
-	return t.LexemeName == currToken.LexemeName;
+	return t.LexemeName == nextToken().LexemeName;
 }
 
 //<Rat18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
-bool Rat18F() 
+bool Syntax::Rat18F() 
 {
 	return Opt_func_def() &&
 		   
@@ -44,7 +52,7 @@ bool Rat18F()
 }
 
 //<Opt Function Definitions> ::= <Function Definitions> | <Empty>
-bool Opt_func_def()
+bool Syntax::Opt_func_def()
 {
 	printf("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$\n");
 	if (Func_def())
@@ -55,7 +63,7 @@ bool Opt_func_def()
 }
 
 //<Function Definitions> ::= <Function> | <Function> <Function Definitions>
-bool Func_def() 
+bool Syntax::Func_def() 
 {
 	if ()
 		Function();
@@ -66,7 +74,7 @@ bool Func_def()
 	}
 }
 //<Function> ::= function <Identifier> ( <Opt Parameter List>) <Opt Declaration List> <Body>
-bool Function()
+bool Syntax::Function()
 {
 	if (nextToken().LexemeName == "function")
 	{
@@ -79,25 +87,26 @@ bool Function()
 	}
 }
 //<Opt Parameter List> ::= <Parameter List> | <Empty>
-bool Opt_para_list() 
+bool Syntax::Opt_para_list() 
 {
 	if ()
 		Parameter();
 	else if ()		//or
 		Empty();
 }
-//<Parameter List> ::= <Parameter> | <Parameter> , <Parameter List>
-bool Para_list()
+//<Parameter List> ::= <Parameter> <Parameter List>'
+bool Syntax::Para_list()
 {
-	if ()
-		Parameter();
-	else if ()		//or
-		Parameter();
-		if (nextToken().LexemeName == ",")
-		Para_list();
+	Parameter();
+	Para_list_prime();
+}
+//<Parameter List>' ::= , <Parameter List> | epilson
+bool Syntax::Para_list_prime()
+{
+
 }
 //<Parameter> ::= <IDs > : <Qualifier>
-bool Parameter()
+bool Syntax::Parameter()
 {
 	if (nextToken().TokenName == "Identifier")
 
@@ -106,7 +115,7 @@ bool Parameter()
 	Qualifier();
 }
 //<Qualifier> ::= int | boolean | real
-bool Qualifier()
+bool Syntax::Qualifier()
 {
 	Token t = nextToken();
 	if (t.LexemeName == "int")
@@ -127,7 +136,7 @@ bool Qualifier()
 
 }
 //<Body> ::= { < Statement List> }
-bool Body()
+bool Syntax::Body()
 {
 	if (nextToken().LexemeName == "{")
 	{
@@ -138,36 +147,33 @@ bool Body()
 	}
 }
 //<Opt Declaration List> ::= <Declaration List> | <Empty>
-bool Opt_dec_list()
+bool Syntax::Opt_dec_list()
 {
 	if ()
 		Dec_list();
 	else if()		//or
 		Empty();
 }
-//<Declaration List> := <Declaration> ; | <Declaration> ; <Declaration List>
-bool Dec_list()
+//<Declaration List> ::= <Declaration> ; <Declaration List>'
+bool Syntax::Dec_list()
 {
-	if ()
-	{
-		Dec();
+	Dec();
 		if (nextToken().LexemeName == ";")
-	}
-	else if ()		//or
-	{
-		Dec();
-		if (nextToken().LexemeName == ";")
-		Dec_list();
-	}
+			Dec_list_prime();
+}
+//<Declaration List>' ::= <Declaration List> | <Empty>
+bool Syntax::Dec_list_prime()
+{
+	
 }
 //<Declaration> ::= <Qualifier > <IDs>
-bool Dec()
+bool Syntax::Dec()
 {
 	Qualifier();
 	IDs();
 }
-//<IDs> ::= <Identifier> | <Identifier>, <IDs>
-bool IDs()
+//<IDs> ::= <Identifier> <IDs>'
+bool Syntax::IDs()
 {
 	if (nextToken().TokenName == "Identifier")
 		//or
@@ -175,8 +181,13 @@ bool IDs()
 	IDs();
 
 }
+//<IDs>' ::= , <IDs> | epilson
+bool Syntax::IDs_prime()
+{
+
+}
 //<Statement List> ::= <Statement> | <Statement> <Statement List>
-bool Statement_list()
+bool Syntax::Statement_list()
 {
 	Statement();
 	//or 
@@ -184,7 +195,7 @@ bool Statement_list()
 	Statement_list();
 }
 //<Statement> ::= <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
-bool Statement()
+bool Syntax::Statement()
 {
 	Compound();
 	//or
@@ -202,53 +213,49 @@ bool Statement()
 
 }
 //<Compound> ::= { <Statement List> }
-bool Compound()//same as Body?
+bool Syntax::Compound()//same as Body?
 {
 	if (nextToken().LexemeName == "{")
 	Statement_list();
 	if (nextToken().LexemeName == "}")
 }
 //<Assign> ::= <Identifier> = <Expression> ;
-bool Assign()
+bool Syntax::Assign()
 {
 	if (nextToken().TokenName == "Identifier")
 	if (nextToken().LexemeName == "=")
 	Expression();
 }
-//<If> ::= if ( <Condition> ) <Statement> ifend |
-//         if ( <Condition> ) <Statement> else <Statement> ifend
-bool If()
+//<If> ::= if ( <Condition> ) <Statement> <If>'
+bool Syntax::If()
 {
 	if (nextToken().LexemeName == "if")
 	if (nextToken().LexemeName == "(")
 	Condition();
 	if (nextToken().LexemeName == ")")
 	Statement();
-	if (nextToken().LexemeName == "ifend")
-
-	//or
-	if (nextToken().LexemeName == "if")
-	if (nextToken().LexemeName == "(")
-	Condition();
-	if (nextToken().LexemeName == ")")
-	Statement();
-	if (nextToken().LexemeName == "else")
-	Statement();
-	if (nextToken().LexemeName == "ifend")
+	If_prime();
 
 }
-//<Return> ::= return ; | return <Expression> ;
-bool Return()
+//<If>' ::= ifend | else <Statement> ifend
+bool Syntax::If_prime()
+{
+
+}
+//<Return> ::= return <Return>'
+bool Syntax::Return()
 {
 	if (nextToken().LexemeName == "return")
-	if (nextToken().LexemeName == ";")
-	//or
-	else if (nextToken().LexemeName == "return")
-		Expression();
-			if (nextToken().LexemeName == ";")
+		Return_prime();
 }
+
+bool Syntax::Return_prime()
+{
+
+}
+
 //<Print> ::= put ( <Expression>);
-bool Print()
+bool Syntax::Print()
 {
 	if (nextToken().LexemeName == "put")
 	{
@@ -259,7 +266,7 @@ bool Print()
 	}
 }
 //<Scan> ::= get ( <IDs> );
-bool Scan()
+bool Syntax::Scan()
 {
 	if (nextToken().LexemeName == "get")
 	if (nextToken().LexemeName == "(")
@@ -268,7 +275,7 @@ bool Scan()
 	if (nextToken().LexemeName == ";")
 }
 //<While> ::= while ( <Condition> ) <Statement> whileend
-bool While()
+bool Syntax::While()
 {
 	if (nextToken().LexemeName == "while")
 	if (nextToken().LexemeName == "(")
@@ -278,7 +285,7 @@ bool While()
 	if (nextToken().LexemeName == "whileend")
 }
 //<Condition> ::= <Expression> <Relop> <Expression>
-bool Condition()
+bool Syntax::Condition()
 {
 	printf("<Condition> ::= <Express//ion> <Relop> <Expression>\n");
 	Expression();
@@ -286,7 +293,7 @@ bool Condition()
 	Expression();
 }
 //<Relop> ::= == | ^= | > |<  | => |=<
-bool Relop()
+bool Syntax::Relop()
 {
 	Token t = nextToken();
 	if (t.LexemeName == "==")
@@ -336,13 +343,13 @@ bool Relop()
 
 }
 //<Expression> ::= <Term> <Expression>’
-bool Expression()
+bool Syntax::Expression()
 {
 	printf("<Expression> ::= <Term> <Expression>'\n");
 	return Term() && ExpressionPrime();
 }
-//R26. <Expression>’ ::= +<Term> <Expression>’ | -<Term> <Expression>’ | empty
-bool ExpressionPrime()
+// <Expression>’ ::= +<Term> <Expression>’ | -<Term> <Expression>’ | epilson
+bool Syntax::ExpressionPrime()
 {
 	Token t = nextToken();
 	if (t.LexemeName == "+" || t.LexemeName == "-")
@@ -355,13 +362,13 @@ bool ExpressionPrime()
 		Empty();
 }
 // <Term> = <Factor> <Term>'
-bool Term()
+bool Syntax::Term()
 {
 	printf("<Term> ::= <Factor> <Term>'\n");
 	return Factor() && TermPrime();
 }
-// <Term>’ ::= * <Factor> <Term>’ | / <Factor> <Term>’ | empty
-bool TermPrime()
+// <Term>’ ::= * <Factor> <Term>’ | / <Factor> <Term>’ | epilson
+bool Syntax::TermPrime()
 {
 	Token t = nextToken();
 	if (t.LexemeName == "*" || t.LexemeName == "/")
@@ -373,7 +380,7 @@ bool TermPrime()
 		Empty();
 }
 //<Factor> ::= - <Primary> | <Primary>
-bool Factor()
+bool Syntax::Factor()
 {
 	Token t = nextToken();
 	if (t.LexemeName == "-")
@@ -395,7 +402,7 @@ bool Factor()
 	
 }
 //<Primary> ::= <Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) | <Real> | true | false
-bool Primary()
+bool Syntax::Primary()
 {
 	Token t = nextToken();
 	if (t.TokenName == "Identifier")
@@ -462,8 +469,8 @@ bool Primary()
 		return false;
 	}
 }
-//<Empty> ::= empty
-bool Empty()
+//<Empty> ::= epilson
+bool Syntax::Empty()
 {
-
+	//go to back to previous tokens then return
 }
