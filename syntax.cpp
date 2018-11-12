@@ -54,7 +54,7 @@ bool Syntax::Match(string str)	//for functions with multiple options
 	if (currToken.LexemeName == str)
 	{
 		print_rules();
-		cout << "Match " + str + " and " + currToken.TokenName + ":" + currToken.LexemeName << endl;
+		cout << "Match " + str + " and " + currToken.TokenName + "(" + currToken.LexemeName + ")" << endl;
 		nextToken();
 		return true;
 	}
@@ -269,8 +269,7 @@ bool Syntax::Body()
 	{
 		if (Statement_list())
 		{
-			if (Match("}"))
-				return true;
+			return Match("}");
 		}
 		else
 			return false;
@@ -471,17 +470,17 @@ bool Syntax::If_prime()
 		rules.push_back("<If>' ::= ifend");
 		return Match("ifend");
 	}
-
-	else if (currToken.LexemeName == "else")
+	if (currToken.LexemeName == "else")
 	{
 		rules.push_back("<If>' ::= else <Statement> ifend");
 		Match("else");
 		if (Statement())
 			return Match("ifend");
+		else
+			return false;
 	}
 	else
 		return false;
-
 }
 //<Return> ::= return <Return>'
 bool Syntax::Return()
@@ -506,12 +505,13 @@ bool Syntax::Return_prime()
 		rules.push_back("<Return>' ::= ;");
 		return true;
 	}
-	if (t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
+	else if (t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
 	{
 		rules.push_back("<Return>' ::= <Expression>");
 		if (Expression())
-			if (Match(";"))
-				return true;
+			return Match(";");
+		else
+			return false;
 	}
 	else
 	{
