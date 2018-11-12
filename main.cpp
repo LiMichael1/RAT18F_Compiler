@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include "fsm.h"
+#include "syntax.h"
 #include <iomanip>
 using namespace std;
 
@@ -33,6 +34,7 @@ int main() {
 
 	file = "";							
 
+	vector<Token> all_tokens;
 
 	outFile.open("results.txt");		//OUTPUT FILE
 	while (getline(inFile, input))			//GET INPUT LINE BY LINE 
@@ -44,11 +46,18 @@ int main() {
 		{
 			cout << left << setw(15) << tokens[i].LexemeName << setw(15) << tokens[i].TokenName << endl << endl;
 			outFile << left << setw(15) << tokens[i].LexemeName << setw(15) << tokens[i].TokenName << endl;
+			all_tokens.push_back(tokens[i]);
 		}
 
 	}
 	outFile.close();				//CLOSE THE INPUT/OUTPUT FILES 
 	inFile.close();
+
+	
+
+	Syntax s(all_tokens);
+	s.Rat18F();
+
 	system("pause");
 	return 0;
 }

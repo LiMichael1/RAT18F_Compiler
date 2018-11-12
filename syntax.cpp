@@ -6,11 +6,22 @@ using namespace std;
 //get linenumber for the  print functions??
 Syntax::Syntax(vector<Token> t)
 {
+
 	for(int i =0; t.size(); i++)
 	{
-		Tokens[i] = t[i];
+		Tokens.push_back(t[i]);
 	}
+
 	index = 0;
+}
+Syntax::Syntax()
+{
+	index = 0;
+}
+
+Syntax::~Syntax()
+{
+
 }
 void Syntax::syn_error(Token t, string nonterminal)
 {
@@ -35,6 +46,11 @@ bool Syntax::Accept ()
 	{
 		cout << "Success\n";
 		return true;
+	}
+	else
+	{
+		cout << "Failure\n";
+		return false;
 	}
 }
 
@@ -81,7 +97,6 @@ void Syntax::print_rules()
 //<Rat18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
 bool Syntax::Rat18F() 
 {
-	nextToken();//first token
 	rules.push_back("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$");
 	toggle.push_back(1);
 	if(Opt_func_def() && Match("$$") && Opt_dec_list() && Statement_list() && Match("$$"))

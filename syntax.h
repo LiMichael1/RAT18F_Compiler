@@ -30,6 +30,8 @@ private:
 
 public:
 	Syntax(vector<Token>);
+	Syntax();
+	~Syntax();
 	bool Rat18F();
 	bool Opt_func_def();
 	bool Func_def();
