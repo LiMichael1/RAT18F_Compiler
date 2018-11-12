@@ -19,19 +19,16 @@ private:
 	vector<string> rules;
 	vector<bool> toggle;
 	Token currToken;
-	Token nextToken();
+	void nextToken();
 	bool Accept();
 	bool Match(string);
 	bool Match_t(string);
-	bool check_input(string);
-	void syn_error (Token, string);
+	void syn_error(Token, string);
 	void print_rules();
 
 
 public:
 	Syntax(vector<Token>);
-	Syntax();
-	~Syntax();
 	bool Rat18F();
 	bool Opt_func_def();
 	bool Func_def();
@@ -69,6 +66,7 @@ public:
 	bool TermPrime();
 	bool Factor();
 	bool Primary();
+	bool Primary_prime();
 	bool Empty();
 };
 #endif
