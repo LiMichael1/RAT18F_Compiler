@@ -1,402 +1,691 @@
 #include "syntax.h"
 #include "fsm.h"
 
-#include <iostream>
-
 using namespace std;
 
-//get linenumber for the print functions??
-
-Token Syntax::nextToken()		//???
+//get linenumber for the  print functions??
+Syntax::Syntax(vector<Token> t)
 {
-	//return ((i == 0) ? v[i] : v[++i]);
-	//updates current token
+	for(int i =0; t.size(); i++)
+	{
+		Tokens[i] = t[i];
+	}
+	index = 0;
+}
+void Syntax::syn_error(Token t, string nonterminal)
+{
+	cout << t.TokenName + ":" +t.LexemeName + " is not expected\n";
+	cout << "No Match for " + nonterminal << endl;
+	exit(EXIT_FAILURE);
+}
+
+Token Syntax::nextToken()		//???"
+{
+	index++;
+	currToken = Tokens[index];
+
+	cout << "Token: " + currToken.TokenName + "\t\t Lexeme: " + currToken.LexemeName << endl;
+	return currToken;
 }
 
 bool Syntax::Accept ()
 {
-
+	int size = rules.size();
+	if(index == size -1)
+	{
+		cout << "Success\n";
+		return true;
+	}
 }
 
-bool Syntax::Match(Token t)
+bool Syntax::Match(string str)	//for functions with multiple options
 {
-
-	if(t.LexemeName == currToken.LexemeName)
+	if(currToken.LexemeName == str)
 	{
-		printf("Match %s and %s:%s\n", t.LexemeName, currToken.TokenName, currToken.LexemeName);
+		print_rules();
+		cout << "Match " + str + " and " + currToken.TokenName + ":" + currToken.LexemeName << endl;
+		nextToken();
 		return true;
 	}
 	else
 	{
-		printf("No Match for %s\n", t.LexemeName);
 		return false;
 	}
 }
-bool Syntax::check_input(Token t)
+bool Syntax::Match_t(string str)	//for token names
 {
-	return t.LexemeName == nextToken().LexemeName;
+	if(currToken.TokenName == str)
+	{
+		print_rules();
+		cout << "Match " + str + " and " + currToken.TokenName + ":" + currToken.LexemeName << endl;
+		nextToken();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
+
+void Syntax::print_rules()
+{
+	for(int i = 0; rules.size(); i++)
+		cout << rules[i]<< endl;
+	rules.clear();
+}
+
+
+
+
 
 //<Rat18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
 bool Syntax::Rat18F() 
 {
-	return Opt_func_def() &&
-		   
-	
-	Opt_func_def();
-	if (nextToken().LexemeName == "$$")
-	Opt_dec_list();
-	Statement_list();
-	if (nextToken().LexemeName == "$$")
+	nextToken();//first token
+	rules.push_back("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$");
+	toggle.push_back(1);
+	if(Opt_func_def() && Match("$$") && Opt_dec_list() && Statement_list() && Match("$$"))
+		return Accept();
+
+		  
 	//Accepting State
 }
 
 //<Opt Function Definitions> ::= <Function Definitions> | <Empty>
 bool Syntax::Opt_func_def()
-{
-	printf("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$\n");
-	if (Func_def())
-	
+{   
+
+	if (currToken.LexemeName == "function")
+	{
+		rules.push_back("<Opt Function Definitions> ::= <Function Definitions>");
+		return ((Func_def())?true:false);
+	}
 		
-	else if(Empty())		//or
-		Empty();
+	else 
+	{	
+		rules.push_back("<Opt Function Definitions> ::= <Empty>");	
+		return Empty();
+	}
 }
 
-//<Function Definitions> ::= <Function> | <Function> <Function Definitions>
+//<Function Definitions> ::= <Function> <Function Definitions>'
 bool Syntax::Func_def() 
 {
-	if ()
-		Function();
-	else if ()		//or
-	{
-		Function();
-		Func_def();
+	rules.push_back("<Function Definitions> ::= <Function> <Function Definitions>'");
+	if(Function())
+		if(Func_def_prime())
+			return true;
+		else 
+			return false;
+	else
+		return false;
+}
+//<Function Definition>' ::= <Function Definitions> | <Empty>
+bool Syntax::Func_def_prime()
+{
+	if(currToken.LexemeName == "function")
+	{  
+		rules.push_back("<Function Definition>' ::= <Function Definitions> ");
+		return ((Func_def())?true:false);
+	}
+	else 
+	{	
+		rules.push_back("<Function Definition>' ::= <Empty");
+		return Empty();
 	}
 }
 //<Function> ::= function <Identifier> ( <Opt Parameter List>) <Opt Declaration List> <Body>
 bool Syntax::Function()
 {
-	if (nextToken().LexemeName == "function")
+	rules.push_back("<Function> ::= function <Identifier> ( <Opt Parameter List>) <Opt Declaration List> <Body>");
+	if (Match("function"))
 	{
-		if (nextToken().TokenName == "Identifier")
-			if (nextToken().LexemeName == "{")
-				Opt_para_list();
-		if (nextToken().LexemeName == "}")
-			Opt_dec_list();
-		Body();
+		if (Match_t("Identifier"))
+			if (Match("{"))
+				if(Opt_para_list())
+					if (Match("}"))
+						if(Opt_dec_list())
+							if(Body())
+								return true;
+							else 
+								return false;
+						else
+							return false;
+					else
+						return false;
+				else 
+					return false;
+			else 
+				return false;
+		else
+			return false;
 	}
+	else 
+		return false;
 }
 //<Opt Parameter List> ::= <Parameter List> | <Empty>
 bool Syntax::Opt_para_list() 
 {
-	if ()
-		Parameter();
-	else if ()		//or
-		Empty();
+	if (currToken.TokenName == "Identifier")
+	{
+		rules.push_back("<Opt Parameter List> ::= <Parameter List>");
+		return ((Para_list())?true:false);
+	}
+	else 
+	{
+		rules.push_back("<Opt Parameter List> ::= <Empty>");
+		return Empty();
+	}
 }
 //<Parameter List> ::= <Parameter> <Parameter List>'
 bool Syntax::Para_list()
 {
-	Parameter();
-	Para_list_prime();
+	rules.push_back("<Parameter List> ::= <Parameter> <Parameter List>'");
+	if(Parameter())
+	{
+		if(Para_list_prime())
+			return true;
+		else 
+			return false;
+	}
+	else
+		return false;
+	
 }
 //<Parameter List>' ::= , <Parameter List> | epilson
 bool Syntax::Para_list_prime()
 {
-
+	if(Match(","))
+	{
+		if(currToken.TokenName == "Identifier")
+		{
+			rules.push_back("<Parameter List>' ::= , <Parameter List> ");
+			return Para_list();
+		}
+		else 
+			return Empty();
+	}
+	else 
+	{
+		rules.push_back("<Parameter List>' ::= epilson");
+		return Empty();
+	}
 }
 //<Parameter> ::= <IDs > : <Qualifier>
 bool Syntax::Parameter()
 {
-	if (nextToken().TokenName == "Identifier")
-
-	if (nextToken().LexemeName == ".")
-
-	Qualifier();
+	rules.push_back("<Parameter> ::= <IDs > : <Qualifier>\n");
+	if (IDs())
+		if (Match(":"))
+			if (Qualifier())
+				return true;
+			else 
+				return false;
+		else 
+			return false;
+	else
+		return false;
 }
 //<Qualifier> ::= int | boolean | real
 bool Syntax::Qualifier()
 {
-	Token t = nextToken();
-	if (t.LexemeName == "int")
+	
+	if (currToken.LexemeName =="int") 
 	{
-		printf("Match %s and %s:int", t.LexemeName , t.TokenName);
+		rules.push_back("<Qualifier> ::= int\n");
+		Match("int");
 		return true;
 	}
-	else if (t.LexemeName == "boolean")//or
+	if (currToken.LexemeName =="boolean") 
 	{
-		printf("Match %s and %s:boolean", t.LexemeName , t.TokenName);
+		rules.push_back("<Qualifier> ::= boolean\n");
+		Match("boolean");
 		return true;
-	}	
-	else if (t.LexemeName == "real")//or
+	}
+	if (currToken.LexemeName =="real") 
+	{	
+		rules.push_back("<Qualifier> ::= real\n");
+		Match("real");
+		return true;
+	}
+	else 
 	{
-		printf("Match %s and %s:real", t.LexemeName , t.TokenName);
-		return true;
+		//syn_error("Expected: int, boolean, real\nGot %s:%s\n", currToken.TokenName, currToken.LexemeName)
+		return false;
 	}
 
 }
 //<Body> ::= { < Statement List> }
 bool Syntax::Body()
 {
-	if (nextToken().LexemeName == "{")
+	if (Match("{"))
 	{
 		if(Statement_list())
 		{
-			if (nextToken().LexemeName == "}")
+			if (Match("}"))
+				return true;
 		}
+		else
+			return false;
 	}
+	else 
+		return false;
 }
 //<Opt Declaration List> ::= <Declaration List> | <Empty>
 bool Syntax::Opt_dec_list()
 {
-	if ()
-		Dec_list();
-	else if()		//or
-		Empty();
+	
+	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" || currToken.LexemeName == "real")
+	{
+		rules.push_back("<Opt Declaration List> ::= <Declaration List>");
+		return ((Dec_list())? true:false);
+	}
+	else 		//or
+		return Empty();
 }
 //<Declaration List> ::= <Declaration> ; <Declaration List>'
 bool Syntax::Dec_list()
 {
-	Dec();
-		if (nextToken().LexemeName == ";")
-			Dec_list_prime();
+	rules.push_back("<Declaration> ; <Declaration List>'");
+	if(Dec())
+		if (Match(";"))
+			return((Dec_list_prime())?true:false);
+		else 
+			return false;
+	else 
+		return false;
+
 }
 //<Declaration List>' ::= <Declaration List> | <Empty>
 bool Syntax::Dec_list_prime()
 {
-	
+	return ((Opt_dec_list()?true:false));
 }
-//<Declaration> ::= <Qualifier > <IDs>
+//<Declaration> ::= <Qualifier> <IDs>
 bool Syntax::Dec()
 {
-	Qualifier();
-	IDs();
+	rules.push_back("<Declaration> ::= <Qualifier> <IDs>");
+	if(Qualifier())
+		return ((IDs())?true:false);
+	else 
+		return false;
 }
 //<IDs> ::= <Identifier> <IDs>'
 bool Syntax::IDs()
 {
-	if (nextToken().TokenName == "Identifier")
-		//or
-	if (nextToken().TokenName == "Identifier")
-	IDs();
+	rules.push_back("<IDs> ::= <Identifier> <IDs>'");
+	if (Match_t("Identifier"))
+		return((IDs_prime())?true:false);
+	else 
+		return false;
 
 }
 //<IDs>' ::= , <IDs> | epilson
 bool Syntax::IDs_prime()
 {
-
+	if(currToken.LexemeName == ",")
+	{
+		rules.push_back("<IDs>' ::= , <IDs>");
+		Match(",");
+		return((IDs_prime())?true:false);
+	}
+	else
+	{
+		return Empty();
+	}
 }
-//<Statement List> ::= <Statement> | <Statement> <Statement List>
+//<Statement List> ::= <Statement> <Statement List>'
 bool Syntax::Statement_list()
 {
-	Statement();
-	//or 
-	Statement();
-	Statement_list();
+	if(Statement())
+		return Statement_list_prime();
+	else 
+		return false;
+}
+//<Statement List>' ::= <Statement List> | epilson
+bool Syntax::Statement_list_prime()
+{
+	string L = currToken.LexemeName;
+	string T = currToken.TokenName;
+	if(T=="Identifier" || L == "{" || L == "if" || L == "return" || L == "put" || L=="get" || L== "while")
+	{
+		rules.push_back("<Statement List>' ::= <Statement List>");
+		return((IDs_prime())?true:false); 
+	}	
+
+	else
+	{
+		rules.push_back("<Statement List>' ::= epilson");
+		return Empty();
+	}
 }
 //<Statement> ::= <Compound> | <Assign> | <If> | <Return> | <Print> | <Scan> | <While>
 bool Syntax::Statement()
-{
-	Compound();
-	//or
-	Assign();
-	//or
-	If();
-	//or
-	Return();
-	//or
-	Print();
-	//or 
-	Scan();
-	//or
-	While();
+{	
+	if(currToken.LexemeName== "{")
+	{
+		rules.push_back("<Statement> ::= <Compound>");
+		return ((Compound())?true:false);
+	}	
+	else if(currToken.TokenName== "Identifier")
+	{
+		rules.push_back("<Statement> ::= <Assign>");
+		return ((Assign())?true:false);
+	}
+	else if(currToken.LexemeName== "if")
+	{
+		rules.push_back("<Statement> ::= <If>");
+		return ((If())?true:false);
+	}
+	else if(currToken.LexemeName== "return")
+	{	
+		rules.push_back("<Statement> ::= <Return>");
+		return ((Return())?true:false);
+	}
+	else if(currToken.LexemeName== "put")
+	{	
+		rules.push_back("<Statement> ::= <Print>");
+		return ((Print())?true:false);
+	}
+	else if(currToken.LexemeName== "get") 
+	{
+		rules.push_back("<Statement> ::= <Print>");
+		return ((Scan())?true:false);
+	}
+	else if(currToken.LexemeName== "while")
+	{
+		rules.push_back("<Statement> ::= <While>");
+		return ((While())?true:false);
+	}
+	else
+	{
+		//error
+		return false;
+	}
 
 }
 //<Compound> ::= { <Statement List> }
 bool Syntax::Compound()//same as Body?
 {
-	if (nextToken().LexemeName == "{")
-	Statement_list();
-	if (nextToken().LexemeName == "}")
+	rules.push_back("<Compound> ::= { <Statement List> }\n");
+	if (Match("{"))
+	{
+		if(Statement_list())
+			return((Match("}"))?true:false);
+		else 
+			return false;
+	}
+	else 
+		return false;
 }
 //<Assign> ::= <Identifier> = <Expression> ;
 bool Syntax::Assign()
 {
-	if (nextToken().TokenName == "Identifier")
-	if (nextToken().LexemeName == "=")
-	Expression();
+	rules.push_back("<Assign> ::= <Identifier> = <Expression> ;");
+	if (Match_t("Identifier"))
+		if (Match("="))
+			return ((Expression())?true:false);
+		else
+			return false;
+	return false;
 }
 //<If> ::= if ( <Condition> ) <Statement> <If>'
 bool Syntax::If()
 {
-	if (nextToken().LexemeName == "if")
-	if (nextToken().LexemeName == "(")
-	Condition();
-	if (nextToken().LexemeName == ")")
-	Statement();
-	If_prime();
+	rules.push_back("<If> ::= if ( <Condition> ) <Statement> <If>'");
+	if (Match("if"))
+		if (Match("("))
+			if(Condition())
+				if (Match(")"))
+					if(Statement())
+						return If_prime();
+					else
+						return false;
+				else
+					return false;
+			else
+				return false;
+		else
+			return false;
+	else
+		return false;
 
 }
 //<If>' ::= ifend | else <Statement> ifend
 bool Syntax::If_prime()
 {
+	if(currToken.LexemeName == "ifend")
+	{
+		rules.push_back("<If>' ::= ifend");
+		return Match("ifend");
+	}
+
+	else if (currToken.LexemeName == "else")
+	{
+		rules.push_back("<If>' ::= else <Statement> ifend");
+		Match("else");
+		if(Statement())
+			return Match("ifend");
+	}
+	else
+		return false;
 
 }
 //<Return> ::= return <Return>'
 bool Syntax::Return()
 {
-	if (nextToken().LexemeName == "return")
-		Return_prime();
+	if (Match("return"))
+	{
+		rules.push_back("<Return> ::= return <Return>'");
+		Match("<Return> ::= return <Return>'");
+		return Return_prime();
+	}
+	else 
+		return false;
 }
-
+// <Return>' ::= <Expression> | epilson
 bool Syntax::Return_prime()
 {
-
+	string t = currToken.TokenName;
+	string l = currToken.LexemeName;
+	if(t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
+	{
+		return ((Expression())?true:false);
+	}
+	else 
+		return Empty();
 }
 
 //<Print> ::= put ( <Expression>);
 bool Syntax::Print()
 {
-	if (nextToken().LexemeName == "put")
+	if (currToken.LexemeName == "put")
 	{
-		if (nextToken().LexemeName == "(")
-			Expression();
-		if (nextToken().LexemeName == ")")
-		if (nextToken().LexemeName == ";")
+		rules.push_back("<Print> ::= put ( <Expression>);");
+		Match("put");
+		if (Match("("))
+			if(Expression())
+				if (Match (")"))
+					return ((Match(";"))?true:false);
+				else
+					return false;
+			else
+				return false;
+		else
+			return false;
 	}
+	else 
+		return false;
 }
 //<Scan> ::= get ( <IDs> );
 bool Syntax::Scan()
 {
-	if (nextToken().LexemeName == "get")
-	if (nextToken().LexemeName == "(")
-	IDs();
-	if (nextToken().LexemeName == ")")
-	if (nextToken().LexemeName == ";")
+	if (currToken.LexemeName == "get")
+	{
+		rules.push_back("<Scan> ::= get ( <IDs> );");
+		Match("get");
+		if (Match("("))
+			if(IDs())
+				if (Match(")"))
+					return(Match(";"));
+				else
+					return false;
+			else 
+				return false;
+		else
+			return false;
+	}
+	else
+		return false;
 }
 //<While> ::= while ( <Condition> ) <Statement> whileend
 bool Syntax::While()
 {
-	if (nextToken().LexemeName == "while")
-	if (nextToken().LexemeName == "(")
-	Condition();
-	if (nextToken().LexemeName == ")")
-	Statement();
-	if (nextToken().LexemeName == "whileend")
+	if (currToken.LexemeName == "while")
+	{
+		rules.push_back("<While> ::= while ( <Condition> ) <Statement> whileend");
+		Match("while");
+		if (Match("("))
+			if(Condition())
+				if (Match(")"))
+					if (Statement())
+						return (Match("whileend"));
+					else
+						return false;
+				else
+					return false;
+			else
+				return false;
+		else 
+			return false;
+	}
+	else
+		return false;
 }
 //<Condition> ::= <Expression> <Relop> <Expression>
 bool Syntax::Condition()
 {
-	printf("<Condition> ::= <Express//ion> <Relop> <Expression>\n");
-	Expression();
-	Relop();
-	Expression();
+	rules.push_back("<Condition> ::= <Express//ion> <Relop> <Expression>");
+	if(Expression())
+		if(Relop())
+			return Expression();
+		else
+			return false;
+	else
+		return false;
 }
 //<Relop> ::= == | ^= | > |<  | => |=<
 bool Syntax::Relop()
 {
-	Token t = nextToken();
-	if (t.LexemeName == "==")
+	nextToken();
+	if (currToken.LexemeName == "==")
 	{
-		printf("<Relop> ::= ==\n");
-		printf("Match %s and ==\n", t.LexemeName);
+		rules.push_back("<Relop> ::= ==");
+		Match("==");
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "^=")
+	else if (currToken.LexemeName == "^=")
 	{
-		printf("<Relop> ::= ^=\n");
-		printf("Match %s and ^=\n", t.LexemeName);
+		rules.push_back("<Relop> ::= ^=");
+		Match("^=");
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == ">")
+	else if (currToken.LexemeName == ">")
 	{
-		printf("<Relop> ::= >\n");
-		printf("Match %s and >\n", t.LexemeName);
+		rules.push_back("<Relop> ::= >");
+		Match(">");
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "<")
+	else if (currToken.LexemeName == "<")
 	{
-		printf("<Relop> ::= <\n");
-		printf("Match %s and <\n", t.LexemeName);
+		rules.push_back("<Relop> ::= <");
+		Match("<");
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "=>")
+	else if (currToken.LexemeName == "=>")
 	{
-		printf("<Relop> ::= =>\n");
-		printf("Match %s and =>\n", t.LexemeName);
+		rules.push_back("<Relop> ::= =>");
+		Match("=>");
 		return true;
 	}
 		//or
-	else if (nextToken().LexemeName == "<=")
+	else if (currToken.LexemeName == "<=")
 	{
-		printf("<Relop> ::= <=\n");
-		printf("Match %s and <=\n", t.LexemeName);
+		rules.push_back("<Relop> ::= <=");
+		Match("<=");
 		return true;
 	}
-	//error message 
-	printf("No Match for <Relop>\n");
-	return false;
-
+	else
+	{
+		//syn_error("No match for <Relop>\nExpected == | ^= | > |<  | => |=<");
+		return false;
+	}
 }
 //<Expression> ::= <Term> <Expression>’
 bool Syntax::Expression()
 {
-	printf("<Expression> ::= <Term> <Expression>'\n");
+	rules.push_back("<Expression> ::= <Term> <Expression>'\n");
 	return Term() && ExpressionPrime();
 }
 // <Expression>’ ::= +<Term> <Expression>’ | -<Term> <Expression>’ | epilson
 bool Syntax::ExpressionPrime()
 {
-	Token t = nextToken();
-	if (t.LexemeName == "+" || t.LexemeName == "-")
+	if (currToken.LexemeName == "+" || currToken.LexemeName == "-")
 	{
-		printf("<Expression>' ::= %s<Term>\n", t.LexemeName);
+		string rule = "<Expression>' ::= " + currToken.LexemeName + "<Term> <Expression>'";
+		rules.push_back(rule);
+		Match(currToken.LexemeName);
 		return Term() && ExpressionPrime();
 	}
-	//or
 	else
-		Empty();
+	{
+		rules.push_back("<Expression>' ::= epilson");
+		return Empty();
+	}
 }
 // <Term> = <Factor> <Term>'
 bool Syntax::Term()
 {
-	printf("<Term> ::= <Factor> <Term>'\n");
+	rules.push_back("<Term> ::= <Factor> <Term>'");
 	return Factor() && TermPrime();
 }
 // <Term>’ ::= * <Factor> <Term>’ | / <Factor> <Term>’ | epilson
 bool Syntax::TermPrime()
 {
-	Token t = nextToken();
-	if (t.LexemeName == "*" || t.LexemeName == "/")
+	if (currToken.LexemeName == "*" || currToken.LexemeName == "/")
 	{
-		printf("<Term>' ::= %s<Factor><Term>\n", t.LexemeName);
+		string rule = "<Term>' ::= " + currToken.LexemeName + "<Factor> <Term>'";
+		rules.push_back(rule);
+		Match(currToken.LexemeName);
 		return Factor() && TermPrime();
 	}
 	else //changable 
-		Empty();
+	{
+		rules.push_back("<Term>' ::= epilson");
+		return Empty();
+	}
 }
 //<Factor> ::= - <Primary> | <Primary>
 bool Syntax::Factor()
 {
-	Token t = nextToken();
-	if (t.LexemeName == "-")
+	if (currToken.LexemeName == "-")
 	{
-		printf("<Factor> ::= -<Primary>\n");
-		printf("Match %s and -\n", currToken.LexemeName);
+		rules.push_back("<Factor> ::= -<Primary>");
 		return Primary();
 	}
-	else if (Primary())
+	string t = currToken.TokenName;
+	string l = currToken.LexemeName;
+	if(t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
 	{
-		printf("<Factor> ::= <Primary>\n");
-		return true;
+		rules.push_back(("<Factor> ::= <Primary>"));
+		return Primary();
 	}
 	else
 	{
-		printf("No Match for Factor");
 		return false;
 	}
 	
@@ -404,73 +693,73 @@ bool Syntax::Factor()
 //<Primary> ::= <Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) | <Real> | true | false
 bool Syntax::Primary()
 {
-	Token t = nextToken();
-	if (t.TokenName == "Identifier")
-	{
-		
-		if (nextToken().LexemeName == "(")
+	if (currToken.TokenName == "Identifier")
+	{	
+		if (currToken.LexemeName=="(")
 		{
+			Match_t("Identifier");
+			Match("(");
 			if (IDs())
 			{
-				if (nextToken().LexemeName == ")")
+				if (Match(")"))
 				{
-
+					rules.push_back("<Primary> ::= <Identifier> ( <IDs> )");
+					return true;
 				}
 			}
 		}
 		else
 		{
-			printf("<Primary> ::= <Identifier>\n");
+			Match_t("Identifier");
+			rules.push_back("<Primary> ::= <Identifier>");
 			return true;
 		}
 	}
 	//or
-	else if (t.TokenName == "Integer")
+	else if (currToken.TokenName == "Integer")
 	{ 
-		printf("<Primary> ::= <Integer>\n");
-		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
-		return true;
+		rules.push_back("<Primary> ::= <Integer>");
+		return Match_t("Integer");
 	}	
 		//or
-	else if (t.LexemeName == "(")
+	else if (currToken.LexemeName == "(")
 	{
+		rules.push_back("<Primary> ::= (<Expression>)");
+		Match("(");
 		if (Expression())
 		{
-			if (nextToken().LexemeName == ")")
-			{
-
-			}
+			return Match(")");
 		}
+		else
+			return false;
 	}
 		//or
-	else if (t.TokenName == "Real")
+	else if (currToken.TokenName == "Real")
 	{
-		printf("<Primary> ::= <Real>\n");
-		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
-		return true;
+		rules.push_back("<Primary> ::= <Real>");
+		return Match_t("Real");
 	}
 		//or
-	else if (t.LexemeName == "true")
+	else if (currToken.LexemeName == "true")
 	{
-		printf("<Primary> ::= true\n");
-		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
-		return true;
+		rules.push_back("<Primary> ::= true");
+		return Match("true");
 	}
 		//or
-	else if (t.LexemeName == "false")
+	else if (currToken.LexemeName == "false")
 	{
-		printf("<Primary> ::= false\n");
-		printf("Match %s and %s:%s\n", t.LexemeName, t.TokenName, t.LexemeName);
-		return true;
+		rules.push_back("<Primary> ::= false");
+		return Match("false");
 	}
 	else
 	{
-		printf("No Match for <Primary>\n")
+		//syn_error("<Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) | <Real> | true | false" , "<Primary>");
 		return false;
 	}
-}
+}	
 //<Empty> ::= epilson
 bool Syntax::Empty()
 {
-	//go to back to previous tokens then return
+	//go to back to previous tokens then return??
+	return true;
 }

@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <ctype.h>
+#include <cstring>
 extern bool comments;
 using namespace std;
 
@@ -39,7 +40,6 @@ const int stateTable[8][3] = {
 	{ IGNORE,		IGNORE,		IGNORE }		// STATE 8
 };
 
-
 Token Lexer(char* buffer, int currentState, string currentHolder, int& i);
 
 bool isDoubleOp(char, char, Token&);
@@ -52,13 +52,13 @@ bool isOperator(string);
 
 bool isSeparator(string);
 
-Token idIntRealHelper(int, string);
+Token Id_int_real_helper(int, string);
 
-Token sepOpHelper(string);
+Token Sep_Op_helper(string);
 
 bool isPunct(int);
 
-int getColumn(char);
+int GetCol(char);
 
 string getTokenName(int, string);
 
