@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 #include <ctype.h>
-#include <cstring>
 extern bool comments;
 using namespace std;
 
@@ -17,6 +16,7 @@ struct Token
 	string LexemeName;
 	int TokenType;
 	string TokenName;
+	int LineNumber;
 };
 
 enum TRANSITION_STATES			//FOR THE FINITE STATE MACHINE
@@ -30,8 +30,8 @@ enum TRANSITION_STATES			//FOR THE FINITE STATE MACHINE
 
 //FINITE STATE MACHINE 
 const int stateTable[8][3] = {			
-	{ SINGLE_IDEN,	INTEGER,	IGNORE },		// STATE 1
-	{ IGNORE,		INTEGER,	3 },			// STATE 2
+	{ SINGLE_IDEN,	INTEGER,	IGNORE },			// STATE 1
+	{ IGNORE,		INTEGER,	3 },				// STATE 2
 	{ IGNORE,		REAL,		IGNORE },		// STATE 3
 	{ IGNORE,		REAL,		IGNORE },		// STATE 4
 	{ IDENTIFIER,	6,			IGNORE },		// STATE 5

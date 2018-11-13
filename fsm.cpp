@@ -1,6 +1,7 @@
 #include "fsm.h"
 using namespace std;
 
+extern int Line_Counter;
 // RETURNS THE TOTAL COLLECTION OF TOKENS BASED ON THE INPUT 
 vector<Token> Parser(char* buffer)		
 {
@@ -163,7 +164,7 @@ Token Id_int_real_helper(int state, string LexemeName)
 	t.LexemeName = LexemeName;
 	t.TokenType = state;
 	t.TokenName = getTokenName(state, LexemeName);
-
+	t.LineNumber = Line_Counter;
 	return t;
 }
 
@@ -176,18 +177,21 @@ Token Sep_Op_helper(string LexemeName)
 		t.LexemeName = LexemeName;
 		t.TokenName = "Separators";
 		t.TokenType = 9;
+		t.LineNumber = Line_Counter;
 	}
 	else if (isOperator(LexemeName))
 	{
 		t.LexemeName = LexemeName;
 		t.TokenName = "Operators";
 		t.TokenType = 10;
+		t.LineNumber = Line_Counter;
 	}
 	else
 	{
 		t.LexemeName = LexemeName;
 		t.TokenName = "Unknown";
 		t.TokenType = -1;
+		t.LineNumber = Line_Counter;
 	}
 
 	return t;

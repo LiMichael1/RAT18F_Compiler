@@ -1,49 +1,69 @@
 #include "syntax.h"
-#include "fsm.h"
 
 using namespace std;
 
-//get linenumber for the  print functions??
+
 Syntax::Syntax(vector<Token> t)
 {
 	for (size_t i = 0; i<t.size(); i++)
 	{
-		Tokens.push_back(t[i]);
+		Tokens.push_back(t[i]);		//inserts the Tokens into the class
 	}
 	index = 0;
-	currToken = Tokens[0];
-	cout << "Token: " + currToken.TokenName + "\t\t Lexeme: " + currToken.LexemeName << endl;
+	currToken = Tokens[0];			//sets currToken to the first the First Token
+
+	file.open("parseOutput.txt");	//opens output file for Syntax Rules
+
+	file << "Token: " << setw(20) << currToken.TokenName << "\t\t Lexeme: " << currToken.LexemeName << endl << endl;
+	cout << "Token: " << setw(20) << currToken.TokenName << "\t\t Lexeme: " << currToken.LexemeName << endl << endl;
 
 }
-void Syntax::syn_error(Token t, string nonterminal)
+Syntax::~Syntax()
 {
-	cout << t.TokenName + "(" + t.LexemeName + ") is not expected\n";
+	file.close();
+}
+bool Syntax::syn_error(string expected, string nonterminal)
+{
+	print_rules();
+
+	file << "Error: Expected " << expected << " instead of " << currToken.TokenName << "(" << currToken.LexemeName << ") \n";
+	file << "No Match for " << nonterminal << endl;
+	file << "Line: " << currToken.LineNumber+1 << endl;
+
+	cout << "Error: Expected " + expected + " instead of " + currToken.TokenName + "( '" + currToken.LexemeName + "' ) \n";
 	cout << "No Match for " + nonterminal << endl;
+	cout << "Line: " << currToken.LineNumber+1 << endl;
+	system("pause");
 	exit(EXIT_FAILURE);
+	return false;
 }
 
-void Syntax::nextToken()		//???"
+void Syntax::nextToken()
 {
 	int size = Tokens.size();
-	if (index < size-1)
+	if (index < size - 1)
 	{
 		index++;
 		currToken = Tokens[index];
 
-		cout << "Token: " + currToken.TokenName + "\t\t Lexeme: " + currToken.LexemeName << endl;
+		file << "Token: " << setw(20) << currToken.TokenName << " Lexeme: " << currToken.LexemeName << endl << endl;
+
+		cout << "Token: " << setw(20) << currToken.TokenName << " Lexeme: " << currToken.LexemeName << endl << endl;
 	}
 }
 
 bool Syntax::Accept()
 {
 	int size = Tokens.size();
-	if (index == size-1)
+	if (index == size - 1)
 	{
+		file << "Success\n";
 		cout << "Success\n";
 		return true;
 	}
 	else
 	{
+		file << "Failure\n";
 		cout << "Failure\n";
 		return false;
 	}
@@ -54,7 +74,8 @@ bool Syntax::Match(string str)	//for functions with multiple options
 	if (currToken.LexemeName == str)
 	{
 		print_rules();
-		cout << "Match " + str + " and " + currToken.TokenName + "(" + currToken.LexemeName + ")" << endl;
+		file << "Match " << str << " and " << currToken.TokenName << "(" << currToken.LexemeName << ")" << endl << endl;
+		cout << "Match " + str + " and " + currToken.TokenName + "(" + currToken.LexemeName + ")" << endl << endl;
 		nextToken();
 		return true;
 	}
@@ -68,7 +89,8 @@ bool Syntax::Match_t(string str)	//for token names
 	if (currToken.TokenName == str)
 	{
 		print_rules();
-		cout << "Match " + str + " and " + currToken.TokenName + "(" + currToken.LexemeName + ")\n";
+		file << "Match " << str << " and " << currToken.TokenName << "(" << currToken.LexemeName << ")\n\n";
+		cout << "Match " + str + " and " + currToken.TokenName + "(" + currToken.LexemeName + ")\n\n";
 		nextToken();
 		return true;
 	}
@@ -80,8 +102,11 @@ bool Syntax::Match_t(string str)	//for token names
 
 void Syntax::print_rules()
 {
-	for (size_t i = 0; i< rules.size(); i++)
+	for (size_t i = 0; i < rules.size(); i++)
+	{
+		file << rules[i] << endl;
 		cout << rules[i] << endl;
+	}
 	rules.clear();
 }
 
@@ -93,22 +118,19 @@ void Syntax::print_rules()
 bool Syntax::Rat18F()
 {
 	rules.push_back("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$");
-	toggle.push_back(1);
-	if (Opt_func_def() && Match("$$") && Opt_dec_list() && Statement_list() && Match("$$"))
+	if (Opt_func_def() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")) && Opt_dec_list() && Statement_list() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")))
 		return Accept();
 	else
 		return false;
-	//Accepting State
 }
 
 //<Opt Function Definitions> ::= <Function Definitions> | <Empty>
 bool Syntax::Opt_func_def()
 {
-
 	if (currToken.LexemeName == "function")
 	{
 		rules.push_back("<Opt Function Definitions> ::= <Function Definitions>");
-		return ((Func_def()) ? true : false);
+		return Func_def();
 	}
 
 	else
@@ -159,16 +181,16 @@ bool Syntax::Function()
 						else
 							return false;
 					else
-						return false;
+						return syn_error(")", "<Function>");
 				else
 					return false;
 			else
-				return false;
+				return syn_error("(", "<Function>");
 		else
-			return false;
+			return syn_error("<Identifier>", "<Function>");
 	}
 	else
-		return false;
+		return syn_error("function", "<Function>");
 }
 //<Opt Parameter List> ::= <Parameter List> | <Empty>
 bool Syntax::Opt_para_list()
@@ -176,7 +198,7 @@ bool Syntax::Opt_para_list()
 	if (currToken.TokenName == "Identifier")
 	{
 		rules.push_back("<Opt Parameter List> ::= <Parameter List>");
-		return ((Para_list()) ? true : false);
+		return Para_list();
 	}
 	else
 	{
@@ -202,11 +224,12 @@ bool Syntax::Para_list()
 //<Parameter List>' ::= , <Parameter List> | epilson
 bool Syntax::Para_list_prime()
 {
-	if (Match(","))
+	if (currToken.LexemeName == ",")
 	{
+		rules.push_back("<Parameter List>' ::= , <Parameter List> ");
+		Match(",");
 		if (currToken.TokenName == "Identifier")
 		{
-			rules.push_back("<Parameter List>' ::= , <Parameter List> ");
 			return Para_list();
 		}
 		else
@@ -224,12 +247,9 @@ bool Syntax::Parameter()
 	rules.push_back("<Parameter> ::= <IDs > : <Qualifier>\n");
 	if (IDs())
 		if (Match(":"))
-			if (Qualifier())
-				return true;
-			else
-				return false;
+			return Qualifier();
 		else
-			return false;
+			return syn_error(":", "<Parameter>");
 	else
 		return false;
 }
@@ -240,42 +260,39 @@ bool Syntax::Qualifier()
 	if (currToken.LexemeName == "int")
 	{
 		rules.push_back("<Qualifier> ::= int\n");
-		Match("int");
-		return true;
+		return Match("int");
 	}
 	if (currToken.LexemeName == "boolean")
 	{
 		rules.push_back("<Qualifier> ::= boolean\n");
-		Match("boolean");
-		return true;
+		return Match("boolean");
 	}
 	if (currToken.LexemeName == "real")
 	{
 		rules.push_back("<Qualifier> ::= real\n");
-		Match("real");
-		return true;
+		return Match("real");
 	}
 	else
 	{
-		//syn_error("Expected: int, boolean, real\nGot %s:%s\n", currToken.TokenName, currToken.LexemeName)
-		return false;
+		return syn_error("int | boolean | real", "<Qualifier>");
 	}
 
 }
 //<Body> ::= { < Statement List> }
 bool Syntax::Body()
 {
+	rules.push_back("<Body> ::= { < Statement List> }");
 	if (Match("{"))
 	{
 		if (Statement_list())
 		{
-			return Match("}");
+			return ((Match("}")) ? true : syn_error("}", "<Body>"));
 		}
 		else
 			return false;
 	}
 	else
-		return false;
+		return syn_error("{", "<Body>");
 }
 //<Opt Declaration List> ::= <Declaration List> | <Empty>
 bool Syntax::Opt_dec_list()
@@ -284,10 +301,13 @@ bool Syntax::Opt_dec_list()
 	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" || currToken.LexemeName == "real")
 	{
 		rules.push_back("<Opt Declaration List> ::= <Declaration List>");
-		return ((Dec_list()) ? true : false);
+		return Dec_list();
 	}
-	else 		//or
+	else
+	{		
+		rules.push_back("<Opt Declaration List> ::= <Empty>");
 		return Empty();
+	}
 }
 //<Declaration List> ::= <Declaration> ; <Declaration List>'
 bool Syntax::Dec_list()
@@ -295,9 +315,9 @@ bool Syntax::Dec_list()
 	rules.push_back("<Declaration> ; <Declaration List>'");
 	if (Dec())
 		if (Match(";"))
-			return((Dec_list_prime()) ? true : false);
+			return Dec_list_prime();
 		else
-			return false;
+			return syn_error(";", "<Declaration List>");
 	else
 		return false;
 
@@ -305,7 +325,16 @@ bool Syntax::Dec_list()
 //<Declaration List>' ::= <Declaration List> | <Empty>
 bool Syntax::Dec_list_prime()
 {
-	return ((Opt_dec_list() ? true : false));
+	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" || currToken.LexemeName == "real")
+	{
+		rules.push_back("<Declaration List>' ::= <Declaration List>");
+		return Dec_list();
+	}
+	else
+	{
+		rules.push_back("<Declaration List>' ::= <Empty>");
+		return Empty();
+	}
 }
 //<Declaration> ::= <Qualifier> <IDs>
 bool Syntax::Dec()
@@ -326,7 +355,7 @@ bool Syntax::IDs()
 		return IDs_prime();
 	}
 	else
-		return false;
+		return syn_error("<Identifier>", "<IDs>");
 
 }
 //<IDs>' ::= , <IDs> | epilson
@@ -340,12 +369,14 @@ bool Syntax::IDs_prime()
 	}
 	else
 	{
+		rules.push_back("<IDs>' ::= epilson");
 		return Empty();
 	}
 }
 //<Statement List> ::= <Statement> <Statement List>'
 bool Syntax::Statement_list()
 {
+	rules.push_back("<Statement List> ::= <Statement> <Statement List>'");
 	if (Statement())
 		return Statement_list_prime();
 	else
@@ -407,8 +438,7 @@ bool Syntax::Statement()
 	}
 	else
 	{
-		//error
-		return false;
+		return syn_error("{ | <Identifier> | if | return | put | get | while", "<Statement>");
 	}
 
 }
@@ -419,12 +449,12 @@ bool Syntax::Compound()//same as Body?
 	if (Match("{"))
 	{
 		if (Statement_list())
-			return Match("}");
+			return ((Match("}")) ? true : syn_error("}", "<Compound>"));
 		else
 			return false;
 	}
 	else
-		return false;
+		return syn_error("{", "<Compound>");
 }
 //<Assign> ::= <Identifier> = <Expression> ;
 bool Syntax::Assign()
@@ -433,12 +463,12 @@ bool Syntax::Assign()
 	if (Match_t("Identifier"))
 		if (Match("="))
 			if (Expression())
-				return Match(";");
+				return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
 			else
 				return false;
 		else
-			return false;
-	return false;
+			return syn_error("=", "<Assign>");
+	return syn_error("<Identifier>", "<Assign>");
 }
 //<If> ::= if ( <Condition> ) <Statement> <If>'
 bool Syntax::If()
@@ -453,13 +483,13 @@ bool Syntax::If()
 					else
 						return false;
 				else
-					return false;
+					return syn_error(")", "<If>");
 			else
 				return false;
 		else
-			return false;
+			return syn_error("(", "<If>");
 	else
-		return false;
+		return syn_error("if", "<If>");
 
 }
 //<If>' ::= ifend | else <Statement> ifend
@@ -475,12 +505,12 @@ bool Syntax::If_prime()
 		rules.push_back("<If>' ::= else <Statement> ifend");
 		Match("else");
 		if (Statement())
-			return Match("ifend");
+			return ((Match("ifend")) ? true : syn_error("ifend", "<If>'"));
 		else
 			return false;
 	}
 	else
-		return false;
+		return syn_error("ifend | else", "<If>'");
 }
 //<Return> ::= return <Return>'
 bool Syntax::Return()
@@ -492,24 +522,24 @@ bool Syntax::Return()
 		return Return_prime();
 	}
 	else
-		return false;
+		return syn_error("return", "<Return>");
 }
 // <Return>' ::= ; | <Expression>; | epilson
 bool Syntax::Return_prime()
 {
-	
+
 	string t = currToken.TokenName;
 	string l = currToken.LexemeName;
 	if (l == ";")
 	{
 		rules.push_back("<Return>' ::= ;");
-		return true;
+		return ((Match(";")) ? true : syn_error(";", "<Return>'"));
 	}
 	else if (t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
 	{
 		rules.push_back("<Return>' ::= <Expression>");
 		if (Expression())
-			return Match(";");
+			return ((Match(";")) ? true : syn_error(";", "<Return>'"));
 		else
 			return false;
 	}
@@ -530,16 +560,16 @@ bool Syntax::Print()
 		if (Match("("))
 			if (Expression())
 				if (Match(")"))
-					return ((Match(";")) ? true : false);
+					return ((Match(";")) ? true : syn_error(";", "<Print>"));
 				else
-					return false;
+					return syn_error(")", "<Print>");
 			else
 				return false;
 		else
-			return false;
+			return syn_error("(", "<Print>");
 	}
 	else
-		return false;
+		return syn_error("put", "<Print>");
 }
 //<Scan> ::= get ( <IDs> );
 bool Syntax::Scan()
@@ -551,16 +581,16 @@ bool Syntax::Scan()
 		if (Match("("))
 			if (IDs())
 				if (Match(")"))
-					return(Match(";"));
+					return ((Match(";")) ? true : syn_error(";", "<Scan>"));
 				else
-					return false;
+					return syn_error(")", "<Scan>");
 			else
 				return false;
 		else
-			return false;
+			return syn_error("(", "<Scan>");
 	}
 	else
-		return false;
+		return syn_error("get", "<Scan>");;
 }
 //<While> ::= while ( <Condition> ) <Statement> whileend
 bool Syntax::While()
@@ -573,18 +603,18 @@ bool Syntax::While()
 			if (Condition())
 				if (Match(")"))
 					if (Statement())
-						return (Match("whileend"));
+						return ((Match("whileend")) ? true : syn_error("whileend", "<While>"));
 					else
 						return false;
 				else
-					return false;
+					return syn_error(")", "<While>");
 			else
 				return false;
 		else
-			return false;
+			return syn_error("(", "<While>");
 	}
 	else
-		return false;
+		return syn_error("while", "<While>");
 }
 //<Condition> ::= <Expression> <Relop> <Expression>
 bool Syntax::Condition()
@@ -604,57 +634,50 @@ bool Syntax::Relop()
 	if (currToken.LexemeName == "==")
 	{
 		rules.push_back("<Relop> ::= ==");
-		Match("==");
-		return true;
+		return Match("==");
 	}
 	//or
 	else if (currToken.LexemeName == "^=")
 	{
 		rules.push_back("<Relop> ::= ^=");
-		Match("^=");
-		return true;
+		return Match("^=");
 	}
 	//or
 	else if (currToken.LexemeName == ">")
 	{
 		rules.push_back("<Relop> ::= >");
-		Match(">");
-		return true;
+		return Match(">");
 	}
 	//or
 	else if (currToken.LexemeName == "<")
 	{
 		rules.push_back("<Relop> ::= <");
-		Match("<");
-		return true;
+		return Match("<");
 	}
 	//or
 	else if (currToken.LexemeName == "=>")
 	{
 		rules.push_back("<Relop> ::= =>");
-		Match("=>");
-		return true;
+		return Match("=>");
 	}
 	//or
-	else if (currToken.LexemeName == "<=")
+	else if (currToken.LexemeName == "=<")
 	{
-		rules.push_back("<Relop> ::= <=");
-		Match("<=");
-		return true;
+		rules.push_back("<Relop> ::= =<");
+		return Match("<=");
 	}
 	else
 	{
-		//syn_error("No match for <Relop>\nExpected == | ^= | > |<  | => |=<");
-		return false;
+		return syn_error("== | ^= | > |<  | => |=<", "<Relop>");
 	}
 }
-//<Expression> ::= <Term> <Expression>’
+//<Expression> ::= <Term> <Expression>'
 bool Syntax::Expression()
 {
-	rules.push_back("<Expression> ::= <Term> <Expression>'\n");
+	rules.push_back("<Expression> ::= <Term> <Expression>'");
 	return Term() && ExpressionPrime();
 }
-// <Expression>’ ::= +<Term> <Expression>’ | -<Term> <Expression>’ | epilson
+// <Expression>' ::= +<Term> <Expression>' | -<Term> <Expression>' | epilson
 bool Syntax::ExpressionPrime()
 {
 	if (currToken.LexemeName == "+" || currToken.LexemeName == "-")
@@ -676,7 +699,7 @@ bool Syntax::Term()
 	rules.push_back("<Term> ::= <Factor> <Term>'");
 	return Factor() && TermPrime();
 }
-// <Term>’ ::= * <Factor> <Term>’ | / <Factor> <Term>’ | epilson
+// <Term>? ::= * <Factor> <Term>? | / <Factor> <Term>? | epilson
 bool Syntax::TermPrime()
 {
 	if (currToken.LexemeName == "*" || currToken.LexemeName == "/")
@@ -698,6 +721,7 @@ bool Syntax::Factor()
 	if (currToken.LexemeName == "-")
 	{
 		rules.push_back("<Factor> ::= -<Primary>");
+		Match("-");
 		return Primary();
 	}
 	string t = currToken.TokenName;
@@ -709,7 +733,7 @@ bool Syntax::Factor()
 	}
 	else
 	{
-		return false;
+		return syn_error("- | <Identifier>| <Integer | '('| <Real> |  true | false", "<Factor>");
 	}
 
 }
@@ -722,7 +746,7 @@ bool Syntax::Primary()
 		if (Match_t("Identifier"))
 			return Primary_prime();
 		else
-			return false;
+			return syn_error("<Identifier>", "<Primary>");
 	}
 	//or
 	else if (currToken.TokenName == "Integer")
@@ -737,7 +761,7 @@ bool Syntax::Primary()
 		Match("(");
 		if (Expression())
 		{
-			return Match(")");
+			return ((Match(")")) ? true : syn_error(")", "<Primary>"));
 		}
 		else
 			return false;
@@ -762,8 +786,7 @@ bool Syntax::Primary()
 	}
 	else
 	{
-		//syn_error("<Identifier> | <Integer> | <Identifier> ( <IDs> ) | ( <Expression> ) | <Real> | true | false" , "<Primary>");
-		return false;
+		return syn_error("<Identifier>| <Integer | '('| <Real> |  true | false", "<Primary>");
 	}
 }
 //<Primary>' ::= ( <IDs> ) | epilson
@@ -774,7 +797,7 @@ bool Syntax::Primary_prime()
 		rules.push_back("<Primary>' ::= ( <IDs> )");
 		Match("(");
 		if (IDs())
-			return Match(")");
+			return ((Match(")")) ? true : syn_error(")", "<Primary>'"));
 		else
 			return false;
 	}

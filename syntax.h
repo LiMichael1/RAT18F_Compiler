@@ -2,33 +2,37 @@
 #define SYNTAX_H
 
 #include "fsm.h"
-
 #include <iostream>
+#include <iomanip>
 #include <cstdio>
 #include <stdlib.h> 
-
-using namespace std;
-
 #include <string>
 #include <vector>
-//could put it in a class if you want. 
+#include <fstream>
+#include <map>
+#include <tuple>
+using namespace std;
+
+extern vector<string> numberLinesVec;
+
 class Syntax {
 private:
 	vector<Token> Tokens;
+	ofstream file;
 	int index;
 	vector<string> rules;
-	vector<bool> toggle;
 	Token currToken;
 	void nextToken();
 	bool Accept();
 	bool Match(string);
 	bool Match_t(string);
-	void syn_error(Token, string);
+	bool syn_error(string, string);
 	void print_rules();
 
 
 public:
 	Syntax(vector<Token>);
+	~Syntax();
 	bool Rat18F();
 	bool Opt_func_def();
 	bool Func_def();
