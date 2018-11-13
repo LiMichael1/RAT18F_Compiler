@@ -1,28 +1,21 @@
-int first; [* integer]
-real second; [*real integer
+[* this is comment for this sample code which
+   converts  Fahrenheit into Celcius *]
 
+function convert1x (fahr : int)
+{
+           return 5 * (fahr -32) / 9;
+}}
 
-*]
+$$
+     int    low,  high, step;      [* declarations *]
 
-boolean (red)= 2eeew;
+     get (low, high, step);
+     while (low  <  high )  
+         {  put (low);
+             put (convert1x  (low));
+             low =  low  +  step;
+         } 
+      whileend
 
-lfew34242l;	
-
-for
-
-2.00
-
-23141412.1321
-21214214
-
-rewrw2321
-
-boolean third; [* boolean value*]
-
-get(first);
-
-return first;
-if(third) second=23.00; 
-
-	+<,>][\|~!@#$%^&*"
+ $$
 
