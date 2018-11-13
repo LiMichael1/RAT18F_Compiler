@@ -1,0 +1,396 @@
+Token:              Keyword		 Lexeme: function
+
+<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
+<Opt Function Definitions> ::= <Function Definitions>
+<Function Definitions> ::= <Function> <Function Definitions>'
+<Function> ::= function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>
+Match function and Keyword(function)
+
+Token:           Identifier Lexeme: convert1x
+
+Match Identifier and Identifier(convert1x)
+
+Token:           Separators Lexeme: (
+
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: fahr
+
+<Opt Parameter List> ::= <Parameter List>
+<Parameter List> ::= <Parameter> <Parameter List>'
+<Parameter> ::= <IDs > : <Qualifier>
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(fahr)
+
+Token:           Separators Lexeme: :
+
+<IDs>' ::= epilson
+Match : and Separators(:)
+
+Token:              Keyword Lexeme: int
+
+<Qualifier> ::= int
+
+Match int and Keyword(int)
+
+Token:           Separators Lexeme: )
+
+<Parameter List>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: {
+
+<Opt Declaration List> ::= <Empty>
+<Body> ::= { < Statement List> }
+Match { and Separators({)
+
+Token:              Keyword Lexeme: return
+
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <Return>
+<Return> ::= return <Return>'
+Match return and Keyword(return)
+
+Token:              Integer Lexeme: 5
+
+<Return>' ::= <Expression>
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Integer>
+Match Integer and Integer(5)
+
+Token:            Operators Lexeme: *
+
+<Term>' ::= *<Factor> <Term>'
+Match * and Operators(*)
+
+Token:           Separators Lexeme: (
+
+<Factor> ::= <Primary>
+<Primary> ::= (<Expression>)
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: fahr
+
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(fahr)
+
+Token:            Operators Lexeme: -
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= -<Term> <Expression>'
+Match - and Operators(-)
+
+Token:              Integer Lexeme: 32
+
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Integer>
+Match Integer and Integer(32)
+
+Token:           Separators Lexeme: )
+
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: /
+
+<Term>' ::= /<Factor> <Term>'
+Match / and Separators(/)
+
+Token:              Integer Lexeme: 9
+
+<Factor> ::= <Primary>
+<Primary> ::= <Integer>
+Match Integer and Integer(9)
+
+Token:           Separators Lexeme: ;
+
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ; and Separators(;)
+
+Token:           Separators Lexeme: }
+
+<Statement List>' ::= epilson
+Match } and Separators(})
+
+Token:           Separators Lexeme: $$
+
+<Function Definition>' ::= <Empty
+Match $$ and Separators($$)
+
+Token:              Keyword Lexeme: int
+
+<Opt Declaration List> ::= <Declaration List>
+<Declaration> ; <Declaration List>'
+<Declaration> ::= <Qualifier> <IDs>
+<Qualifier> ::= int
+
+Match int and Keyword(int)
+
+Token:           Identifier Lexeme: low
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(low)
+
+Token:           Separators Lexeme: ,
+
+<IDs>' ::= , <IDs>
+Match , and Separators(,)
+
+Token:           Identifier Lexeme: high
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(high)
+
+Token:           Separators Lexeme: ,
+
+<IDs>' ::= , <IDs>
+Match , and Separators(,)
+
+Token:           Identifier Lexeme: step
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(step)
+
+Token:           Separators Lexeme: ;
+
+<IDs>' ::= epilson
+Match ; and Separators(;)
+
+Token:              Keyword Lexeme: get
+
+<Declaration List>' ::= <Empty>
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <Print>
+<Scan> ::= get ( <IDs> );
+Match get and Keyword(get)
+
+Token:           Separators Lexeme: (
+
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: low
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(low)
+
+Token:           Separators Lexeme: ,
+
+<IDs>' ::= , <IDs>
+Match , and Separators(,)
+
+Token:           Identifier Lexeme: high
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(high)
+
+Token:           Separators Lexeme: ,
+
+<IDs>' ::= , <IDs>
+Match , and Separators(,)
+
+Token:           Identifier Lexeme: step
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(step)
+
+Token:           Separators Lexeme: )
+
+<IDs>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: ;
+
+Match ; and Separators(;)
+
+Token:              Keyword Lexeme: while
+
+<Statement List>' ::= <Statement List>
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <While>
+<While> ::= while ( <Condition> ) <Statement> whileend
+Match while and Keyword(while)
+
+Token:           Separators Lexeme: (
+
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: low
+
+<Condition> ::= <Express//ion> <Relop> <Expression>
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(low)
+
+Token:            Operators Lexeme: <
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= epilson
+<Relop> ::= <
+Match < and Operators(<)
+
+Token:           Identifier Lexeme: high
+
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(high)
+
+Token:           Separators Lexeme: )
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: {
+
+<Statement> ::= <Compound>
+<Compound> ::= { <Statement List> }
+
+Match { and Separators({)
+
+Token:              Keyword Lexeme: put
+
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <Print>
+<Print> ::= put ( <Expression>);
+Match put and Keyword(put)
+
+Token:           Separators Lexeme: (
+
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: low
+
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(low)
+
+Token:           Separators Lexeme: )
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: ;
+
+Match ; and Separators(;)
+
+Token:              Keyword Lexeme: put
+
+<Statement List>' ::= <Statement List>
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <Print>
+<Print> ::= put ( <Expression>);
+Match put and Keyword(put)
+
+Token:           Separators Lexeme: (
+
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: convert1x
+
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(convert1x)
+
+Token:           Separators Lexeme: (
+
+<Primary>' ::= ( <IDs> )
+Match ( and Separators(()
+
+Token:           Identifier Lexeme: low
+
+<IDs> ::= <Identifier> <IDs>'
+Match Identifier and Identifier(low)
+
+Token:           Separators Lexeme: )
+
+<IDs>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: )
+
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ) and Separators())
+
+Token:           Separators Lexeme: ;
+
+Match ; and Separators(;)
+
+Token:           Identifier Lexeme: low
+
+<Statement List>' ::= <Statement List>
+<Statement List> ::= <Statement> <Statement List>'
+<Statement> ::= <Assign>
+<Assign> ::= <Identifier> = <Expression> ;
+Match Identifier and Identifier(low)
+
+Token:            Operators Lexeme: =
+
+Match = and Operators(=)
+
+Token:           Identifier Lexeme: low
+
+<Expression> ::= <Term> <Expression>'
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(low)
+
+Token:            Operators Lexeme: +
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= +<Term> <Expression>'
+Match + and Operators(+)
+
+Token:           Identifier Lexeme: step
+
+<Term> ::= <Factor> <Term>'
+<Factor> ::= <Primary>
+<Primary> ::= <Identifier> <Primary>'
+Match Identifier and Identifier(step)
+
+Token:           Separators Lexeme: ;
+
+<Primary>' ::= epilson
+<Term>' ::= epilson
+<Expression>' ::= epilson
+Match ; and Separators(;)
+
+Token:           Separators Lexeme: }
+
+<Statement List>' ::= epilson
+Match } and Separators(})
+
+Token:              Keyword Lexeme: whileend
+
+Match whileend and Keyword(whileend)
+
+Token:           Separators Lexeme: $$
+
+<Statement List>' ::= epilson
+Match $$ and Separators($$)
+
+Success
