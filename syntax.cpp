@@ -664,7 +664,7 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == "=<")
 	{
 		rules.push_back("<Relop> ::= =<");
-		return Match("<=");
+		return Match("=<");
 	}
 	else
 	{
