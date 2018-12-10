@@ -1,8 +1,12 @@
 #include "syntax.h"
-
+#include "semantics.h"
 using namespace std;
 
-
+int addr;
+string saved_string = " ";
+Token saved_token;
+string saved_type;
+bool isGet = false;
 Syntax::Syntax(vector<Token> t)
 {
 	for (size_t i = 0; i<t.size(); i++)
@@ -114,167 +118,35 @@ void Syntax::print_rules()
 
 
 
-//<Rat18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$
+//<Rat18F> ::= $$ <Opt Declaration List> <Statement List> $$
 bool Syntax::Rat18F()
 {
 	rules.push_back("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$");
-	if (Opt_func_def() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")) && Opt_dec_list() && Statement_list() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")))
+	if ( ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")) && Opt_dec_list() && Statement_list() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")))
 		return Accept();
 	else
 		return false;
 }
 
-//<Opt Function Definitions> ::= <Function Definitions> | <Empty>
-bool Syntax::Opt_func_def()
-{
-	if (currToken.LexemeName == "function")
-	{
-		rules.push_back("<Opt Function Definitions> ::= <Function Definitions>");
-		return Func_def();
-	}
-
-	else
-	{
-		rules.push_back("<Opt Function Definitions> ::= <Empty>");
-		return Empty();
-	}
-}
-
-//<Function Definitions> ::= <Function> <Function Definitions>'
-bool Syntax::Func_def()
-{
-	rules.push_back("<Function Definitions> ::= <Function> <Function Definitions>'");
-	if (Function())
-		return Func_def_prime();
-	else
-		return false;
-}
-//<Function Definition>' ::= <Function Definitions> | <Empty>
-bool Syntax::Func_def_prime()
-{
-	if (currToken.LexemeName == "function")
-	{
-		rules.push_back("<Function Definition>' ::= <Function Definitions> ");
-		return Func_def();
-	}
-	else
-	{
-		rules.push_back("<Function Definition>' ::= <Empty");
-		return Empty();
-	}
-}
-//<Function> ::= function <Identifier> ( <Opt Parameter List>) <Opt Declaration List> <Body>
-bool Syntax::Function()
-{
-	rules.push_back("<Function> ::= function <Identifier> (<Opt Parameter List>) <Opt Declaration List> <Body>");
-	if (Match("function"))
-	{
-		if (Match_t("Identifier"))
-			if (Match("("))
-				if (Opt_para_list())
-					if (Match(")"))
-						if (Opt_dec_list())
-							if (Body())
-								return true;
-							else
-								return false;
-						else
-							return false;
-					else
-						return syn_error(")", "<Function>");
-				else
-					return false;
-			else
-				return syn_error("(", "<Function>");
-		else
-			return syn_error("<Identifier>", "<Function>");
-	}
-	else
-		return syn_error("function", "<Function>");
-}
-//<Opt Parameter List> ::= <Parameter List> | <Empty>
-bool Syntax::Opt_para_list()
-{
-	if (currToken.TokenName == "Identifier")
-	{
-		rules.push_back("<Opt Parameter List> ::= <Parameter List>");
-		return Para_list();
-	}
-	else
-	{
-		rules.push_back("<Opt Parameter List> ::= <Empty>");
-		return Empty();
-	}
-}
-//<Parameter List> ::= <Parameter> <Parameter List>'
-bool Syntax::Para_list()
-{
-	rules.push_back("<Parameter List> ::= <Parameter> <Parameter List>'");
-	if (Parameter())
-	{
-		if (Para_list_prime())
-			return true;
-		else
-			return false;
-	}
-	else
-		return false;
-
-}
-//<Parameter List>' ::= , <Parameter List> | epilson
-bool Syntax::Para_list_prime()
-{
-	if (currToken.LexemeName == ",")
-	{
-		rules.push_back("<Parameter List>' ::= , <Parameter List> ");
-		Match(",");
-		if (currToken.TokenName == "Identifier")
-		{
-			return Para_list();
-		}
-		else
-			return Empty();
-	}
-	else
-	{
-		rules.push_back("<Parameter List>' ::= epilson");
-		return Empty();
-	}
-}
-//<Parameter> ::= <IDs > : <Qualifier>
-bool Syntax::Parameter()
-{
-	rules.push_back("<Parameter> ::= <IDs > : <Qualifier>\n");
-	if (IDs())
-		if (Match(":"))
-			return Qualifier();
-		else
-			return syn_error(":", "<Parameter>");
-	else
-		return false;
-}
-//<Qualifier> ::= int | boolean | real
+//<Qualifier> ::= int | boolean 
 bool Syntax::Qualifier()
 {
 
 	if (currToken.LexemeName == "int")
 	{
+		saved_type = "int";
 		rules.push_back("<Qualifier> ::= int\n");
 		return Match("int");
 	}
 	if (currToken.LexemeName == "boolean")
 	{
+		saved_type = "boolean";
 		rules.push_back("<Qualifier> ::= boolean\n");
 		return Match("boolean");
 	}
-	if (currToken.LexemeName == "real")
-	{
-		rules.push_back("<Qualifier> ::= real\n");
-		return Match("real");
-	}
 	else
 	{
-		return syn_error("int | boolean | real", "<Qualifier>");
+		return syn_error("int | boolean ", "<Qualifier>");
 	}
 
 }
@@ -298,7 +170,7 @@ bool Syntax::Body()
 bool Syntax::Opt_dec_list()
 {
 
-	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" || currToken.LexemeName == "real")
+	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" )
 	{
 		rules.push_back("<Opt Declaration List> ::= <Declaration List>");
 		return Dec_list();
@@ -325,7 +197,7 @@ bool Syntax::Dec_list()
 //<Declaration List>' ::= <Declaration List> | <Empty>
 bool Syntax::Dec_list_prime()
 {
-	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" || currToken.LexemeName == "real")
+	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean")
 	{
 		rules.push_back("<Declaration List>' ::= <Declaration List>");
 		return Dec_list();
@@ -341,16 +213,29 @@ bool Syntax::Dec()
 {
 	rules.push_back("<Declaration> ::= <Qualifier> <IDs>");
 	if (Qualifier())
-		return IDs();
+	{
+		if(IDs())
+		{
+			insert_symtable(saved_token.LexemeName, saved_type);
+		}
+	}
 	else
 		return false;
 }
 //<IDs> ::= <Identifier> <IDs>'
 bool Syntax::IDs()
 {
+
 	rules.push_back("<IDs> ::= <Identifier> <IDs>'");
 	if (currToken.TokenName == "Identifier")
 	{
+		saved_token = currToken;
+		saved_string = currToken.LexemeName;
+		if(!isGet)
+		{
+			insert_symtable(saved_token.LexemeName, saved_type);
+		}
+		
 		Match_t("Identifier");
 		return IDs_prime();
 	}
@@ -460,21 +345,33 @@ bool Syntax::Compound()//same as Body?
 bool Syntax::Assign()
 {
 	rules.push_back("<Assign> ::= <Identifier> = <Expression> ;");
-	if (Match_t("Identifier"))
+	if (currToken.TokenName == "Identifier")
+	{
+		Token save = currToken;
+		Match_t("Identifier");
 		if (Match("="))
+		{
 			if (Expression())
+			{
+				gen_instr("POPM", to_string(get_address(save.LexemeName)));
 				return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
+			}
 			else
 				return false;
+		}
 		else
 			return syn_error("=", "<Assign>");
+	}
 	return syn_error("<Identifier>", "<Assign>");
 }
 //<If> ::= if ( <Condition> ) <Statement> <If>'
 bool Syntax::If()
 {
 	rules.push_back("<If> ::= if ( <Condition> ) <Statement> <If>'");
-	if (Match("if"))
+	if (currToken.LexemeName == "if")
+	{	
+		addr = instr_address;
+		Match("if");
 		if (Match("("))
 			if (Condition())
 				if (Match(")"))
@@ -488,6 +385,7 @@ bool Syntax::If()
 				return false;
 		else
 			return syn_error("(", "<If>");
+	}
 	else
 		return syn_error("if", "<If>");
 
@@ -497,6 +395,8 @@ bool Syntax::If_prime()
 {
 	if (currToken.LexemeName == "ifend")
 	{
+		gen_instr("JUMP", "nil");
+		back_patch(instr_address);
 		rules.push_back("<If>' ::= ifend");
 		return Match("ifend");
 	}
@@ -505,7 +405,19 @@ bool Syntax::If_prime()
 		rules.push_back("<If>' ::= else <Statement> ifend");
 		Match("else");
 		if (Statement())
-			return ((Match("ifend")) ? true : syn_error("ifend", "<If>'"));
+		{
+			if(currToken.LexemeName == "ifend")
+			{
+				gen_instr("JUMP", "nil");
+				back_patch(instr_address);
+				return ((Match("ifend")) ? true : syn_error("ifend", "<If>'"));
+			}
+			else
+			{
+				return false;
+			}
+
+		}
 		else
 			return false;
 	}
@@ -535,7 +447,7 @@ bool Syntax::Return_prime()
 		rules.push_back("<Return>' ::= ;");
 		return ((Match(";")) ? true : syn_error(";", "<Return>'"));
 	}
-	else if (t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
+	else if (t == "Identifier" || t == "Integer" || l == "(" || l == "true" || l == "false")
 	{
 		rules.push_back("<Return>' ::= <Expression>");
 		if (Expression())
@@ -555,6 +467,7 @@ bool Syntax::Print()
 {
 	if (currToken.LexemeName == "put")
 	{
+		gen_instr("STDOUT", "nil");
 		rules.push_back("<Print> ::= put ( <Expression>);");
 		Match("put");
 		if (Match("("))
@@ -576,14 +489,19 @@ bool Syntax::Scan()
 {
 	if (currToken.LexemeName == "get")
 	{
+		isGet = true;
 		rules.push_back("<Scan> ::= get ( <IDs> );");
 		Match("get");
 		if (Match("("))
 			if (IDs())
+			{
+				gen_instr("STDIN", "nil");
+				gen_instr("POPM" , to_string(get_address(saved_string)));
 				if (Match(")"))
 					return ((Match(";")) ? true : syn_error(";", "<Scan>"));
 				else
 					return syn_error(")", "<Scan>");
+			}
 			else
 				return false;
 		else
@@ -597,13 +515,19 @@ bool Syntax::While()
 {
 	if (currToken.LexemeName == "while")
 	{
+		int addr = instr_address;
+		gen_instr("Label", "nil");
 		rules.push_back("<While> ::= while ( <Condition> ) <Statement> whileend");
 		Match("while");
 		if (Match("("))
 			if (Condition())
 				if (Match(")"))
 					if (Statement())
+					{
+						gen_instr("JUMP", to_string(addr));
+						back_patch(instr_address);
 						return ((Match("whileend")) ? true : syn_error("whileend", "<While>"));
+					}
 					else
 						return false;
 				else
@@ -619,12 +543,33 @@ bool Syntax::While()
 //<Condition> ::= <Expression> <Relop> <Expression>
 bool Syntax::Condition()
 {
-	rules.push_back("<Condition> ::= <Express//ion> <Relop> <Expression>");
+	rules.push_back("<Condition> ::= <Expression> <Relop> <Expression>");
 	if (Expression())
-		if (Relop())
-			return Expression();
+	{
+		if(currToken.TokenName == "Integer")
+		{
+			if (Relop())
+			{
+				if(currToken.TokenName== "Integer")
+				{
+					return Expression();
+				}
+				else
+				{
+					cerr<< "No Boolean Arithmetic Operations\n";
+					return false;
+				}
+			}
+			else
+				return false;
+		}
 		else
+		{
+			cerr<< "No Boolean Arithmetic Operations\n";
 			return false;
+		}
+
+	}
 	else
 		return false;
 }
@@ -633,36 +578,54 @@ bool Syntax::Relop()
 {
 	if (currToken.LexemeName == "==")
 	{
+		gen_instr ("EQU", "nil");
+        Push_JS (instr_address);  
+        gen_instr ("JUMPZ", "nil");  
 		rules.push_back("<Relop> ::= ==");
 		return Match("==");
 	}
 	//or
 	else if (currToken.LexemeName == "^=")
 	{
+		gen_instr ("NEQ", "nil");
+        Push_JS (instr_address); 
+        gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= ^=");
 		return Match("^=");
 	}
 	//or
 	else if (currToken.LexemeName == ">")
 	{
+		gen_instr ("LES", "nil");
+        Push_JS (instr_address);  
+        gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= >");
 		return Match(">");
 	}
 	//or
 	else if (currToken.LexemeName == "<")
 	{
+		gen_instr ("GRT", "nil");
+        Push_JS (instr_address); 
+        gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= <");
 		return Match("<");
 	}
 	//or
 	else if (currToken.LexemeName == "=>")
 	{
+		gen_instr ("GEQ", "nil");
+        Push_JS (instr_address);  
+        gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =>");
 		return Match("=>");
 	}
 	//or
 	else if (currToken.LexemeName == "=<")
 	{
+		gen_instr ("LEQ", "nil");
+        Push_JS (instr_address); 
+        gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =<");
 		return Match("=<");
 	}
@@ -684,8 +647,17 @@ bool Syntax::ExpressionPrime()
 	{
 		string rule = "<Expression>' ::= " + currToken.LexemeName + "<Term> <Expression>'";
 		rules.push_back(rule);
+
+		string saved_symbol = currToken.LexemeName;
+
 		Match(currToken.LexemeName);
-		return Term() && ExpressionPrime();
+
+		if (Term())
+		{
+			(saved_symbol == "+")?gen_instr("ADD", "nil"):gen_instr("SUB", "nil");
+
+			return ExpressionPrime();
+		}
 	}
 	else
 	{
@@ -706,8 +678,16 @@ bool Syntax::TermPrime()
 	{
 		string rule = "<Term>' ::= " + currToken.LexemeName + "<Factor> <Term>'";
 		rules.push_back(rule);
+
+		string saved_symbol = currToken.LexemeName;
+
 		Match(currToken.LexemeName);
-		return Factor() && TermPrime();
+		if(Factor())
+		{
+			(saved_symbol == "*")?gen_instr("MUL", "nil"):gen_instr("DIV", "nil");
+
+			return TermPrime();
+		}
 	}
 	else //changable 
 	{
@@ -726,22 +706,24 @@ bool Syntax::Factor()
 	}
 	string t = currToken.TokenName;
 	string l = currToken.LexemeName;
-	if (t == "Identifier" || t == "Integer" || t == "Real" || l == "(" || l == "true" || l == "false")
+	if (t == "Identifier" || t == "Integer"  || l == "(" || l == "true" || l == "false")
 	{
 		rules.push_back(("<Factor> ::= <Primary>"));
 		return Primary();
 	}
 	else
 	{
-		return syn_error("- | <Identifier>| <Integer | '('| <Real> |  true | false", "<Factor>");
+		return syn_error("- | <Identifier>| <Integer | '('|   true | false", "<Factor>");
 	}
 
 }
-//<Primary> ::= <Integer> | <Identifier> <Primary>'  | ( <Expression> ) | <Real> | true | false
+//<Primary> ::= <Integer> | <Identifier> <Primary>'  | ( <Expression> ) | true | false
 bool Syntax::Primary()
 {
 	if (currToken.TokenName == "Identifier")
 	{
+		gen_instr("PUSHM", to_string(get_address(currToken.LexemeName)));
+		saved_string = currToken.LexemeName;
 		rules.push_back("<Primary> ::= <Identifier> <Primary>'");
 		if (Match_t("Identifier"))
 			return Primary_prime();
@@ -751,6 +733,7 @@ bool Syntax::Primary()
 	//or
 	else if (currToken.TokenName == "Integer")
 	{
+		gen_instr("PUSHI", currToken.LexemeName);
 		rules.push_back("<Primary> ::= <Integer>");
 		return Match_t("Integer");
 	}
@@ -767,26 +750,22 @@ bool Syntax::Primary()
 			return false;
 	}
 	//or
-	else if (currToken.TokenName == "Real")
-	{
-		rules.push_back("<Primary> ::= <Real>");
-		return Match_t("Real");
-	}
-	//or
 	else if (currToken.LexemeName == "true")
 	{
+		gen_instr("PUSHI" , "1");
 		rules.push_back("<Primary> ::= true");
 		return Match("true");
 	}
 	//or
 	else if (currToken.LexemeName == "false")
 	{
+		gen_instr("PUSHI" , "0");
 		rules.push_back("<Primary> ::= false");
 		return Match("false");
 	}
 	else
 	{
-		return syn_error("<Identifier>| <Integer | '('| <Real> |  true | false", "<Primary>");
+		return syn_error("<Identifier>| <Integer | '('|   true | false", "<Primary>");
 	}
 }
 //<Primary>' ::= ( <IDs> ) | epilson
