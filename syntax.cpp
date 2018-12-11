@@ -380,14 +380,13 @@ bool Syntax::Assign()
 			return syn_error("variable doesn't exist in symbol table1", "<Assign>");
 		}
 		Token save = currToken;
-		cout << "wowo " << save.LexemeName << "\n\n\n\n";;
+		cout << "wowo " << save.LexemeName << save.TokenName << "\n\n\n\n";;
 		Match_t("Identifier");
 		if (Match("="))
 		{
 			if (Expression())
 			{
 				string b = get_type(saved_token.LexemeName);
-				cout << a << " == " << b << endl; 
 				if (b == "Empty")
 				{
 					return syn_error("variable doesn't exist in symbol table2", "<Assign>");
@@ -395,9 +394,11 @@ bool Syntax::Assign()
 				if (a == b)
 				{
 					gen_instr("POPM", to_string(get_address(save.LexemeName)));
-					return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
+					return ((Match(";")) ? true : syn_error(";", "<Assign>"));
 				}
-
+				else
+					return syn_error("Incorrect Assigning of variables" ,"<Assign>");
+				
 			}
 			else
 				return false;
@@ -405,8 +406,8 @@ bool Syntax::Assign()
 		else
 			return syn_error("=", "<Assign>");
 	}
-	
-	return syn_error("<Identifier>", "<Assign>");
+	else
+		return syn_error("<Identifier>", "<Assign>");
 }
 //<If> ::= if ( <Condition> ) <Statement> <If>'
 bool Syntax::If()
@@ -595,13 +596,15 @@ bool Syntax::Condition()
 	rules.push_back("<Condition> ::= <Expression> <Relop> <Expression>");
 	if (Expression())
 	{
-		string a = get_type(currToken.LexemeName);
-		if (a != "Empty")
+		string a = get_type(saved_token.LexemeName);
+		cout << "Boolean ? " << a << endl << endl;
+		if (a != "Empty" && a != "boolean")
 		{
 			if (Relop())
 			{
-				string b = get_type(currToken.LexemeName);
-				if (b != "Empty")
+				string b = get_type(saved_token.LexemeName);
+				cout << "Boolean ??? " << b << endl << endl;
+				if (b != "Empty" && b!= "boolean")
 				{
 					if (a == b)
 					{
@@ -610,16 +613,20 @@ bool Syntax::Condition()
 					else
 						return syn_error("variables aren't equal", "<Condition>");
 				}
+				else
+					return syn_error("No boolean Arithmetic Operations", "Condition");
 			}
 			else
 			{
-				cerr << "No Boolean Arithmetic Operations\n";
+				
 				return false;
 			}
 			return true;
 		}
 		else
-			return false;
+		{
+			return syn_error("No boolean Arithmetic Operations", "Condition");
+		}
 	}
 	else
 		return false;
@@ -818,6 +825,7 @@ bool Syntax::Primary()
 	//or
 	else if (currToken.LexemeName == "true")
 	{
+		saved_token = currToken;
 		gen_instr("PUSHI", "1");
 		rules.push_back("<Primary> ::= true");
 		return Match("true");
@@ -825,6 +833,7 @@ bool Syntax::Primary()
 	//or
 	else if (currToken.LexemeName == "false")
 	{
+		saved_token = currToken;
 		gen_instr("PUSHI", "0");
 		rules.push_back("<Primary> ::= false");
 		return Match("false");
@@ -945,6 +954,10 @@ string get_type(string lex)
 	if (is_number(lex))
 	{
 		return "int";
+	}
+	if (lex == "true" || lex == "false")
+	{
+		return "boolean";
 	}
 	else
 	{
