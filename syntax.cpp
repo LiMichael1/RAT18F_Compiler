@@ -1,14 +1,23 @@
 #include "syntax.h"
-#include "semantics.h"
 using namespace std;
 
-int addr;
-int addr2;
+int addr = 0;
+int addr2 = 0;
 string saved_string = " ";
 Token saved_token;
 string saved_type;
+string saved2;
 bool isGet = false;
 bool isWhile = false;
+stack<int> jump_stack;
+vector<Instruction> instr_table(1000);
+vector<Symbol> sym_table(100);
+int line_address = 1;
+int instr_address = 0;
+int Memory_addr = 5000;
+int symbol = 0;
+int instr_size = 0;
+
 Syntax::Syntax(vector<Token> t)
 {
 	for (size_t i = 0; i<t.size(); i++)
@@ -23,6 +32,7 @@ Syntax::Syntax(vector<Token> t)
 	file << "Token: " << setw(20) << currToken.TokenName << "\t\t Lexeme: " << currToken.LexemeName << endl << endl;
 	cout << "Token: " << setw(20) << currToken.TokenName << "\t\t Lexeme: " << currToken.LexemeName << endl << endl;
 
+
 }
 Syntax::~Syntax()
 {
@@ -34,11 +44,13 @@ bool Syntax::syn_error(string expected, string nonterminal)
 
 	file << "Error: Expected " << expected << " instead of " << currToken.TokenName << "(" << currToken.LexemeName << ") \n";
 	file << "No Match for " << nonterminal << endl;
-	file << "Line: " << currToken.LineNumber+1 << endl;
+	file << "Line: " << currToken.LineNumber + 1 << endl;
 
 	cout << "Error: Expected " + expected + " instead of " + currToken.TokenName + "( '" + currToken.LexemeName + "' ) \n";
 	cout << "No Match for " + nonterminal << endl;
-	cout << "Line: " << currToken.LineNumber+1 << endl;
+	cout << "Line: " << currToken.LineNumber + 1 << endl;
+
+	print_table();
 	system("pause");
 	exit(EXIT_FAILURE);
 	return false;
@@ -123,8 +135,8 @@ void Syntax::print_rules()
 //<Rat18F> ::= $$ <Opt Declaration List> <Statement List> $$
 bool Syntax::Rat18F()
 {
-	rules.push_back("<RAT18F> ::= <Opt Function Definitions> $$ <Opt Declaration List> <Statement List> $$");
-	if ( ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")) && Opt_dec_list() && Statement_list() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")))
+	rules.push_back("<RAT18F> ::= $$ <Opt Declaration List> <Statement List> $$");
+	if (((Match("$$")) ? true : syn_error("$$", "<RAT18F>")) && Opt_dec_list() && Statement_list() && ((Match("$$")) ? true : syn_error("$$", "<RAT18F>")))
 		return Accept();
 	else
 		return false;
@@ -172,13 +184,13 @@ bool Syntax::Body()
 bool Syntax::Opt_dec_list()
 {
 
-	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean" )
+	if (currToken.LexemeName == "int" || currToken.LexemeName == "boolean")
 	{
 		rules.push_back("<Opt Declaration List> ::= <Declaration List>");
 		return Dec_list();
 	}
 	else
-	{		
+	{
 		rules.push_back("<Opt Declaration List> ::= <Empty>");
 		return Empty();
 	}
@@ -216,10 +228,13 @@ bool Syntax::Dec()
 	rules.push_back("<Declaration> ::= <Qualifier> <IDs>");
 	if (Qualifier())
 	{
-		if(IDs())
+		cout << saved_type << endl << endl;
+		if (IDs())
 		{
-			insert_symtable(saved_token.LexemeName, saved_type);
+			return true;
 		}
+		else
+			return false;
 	}
 	else
 		return false;
@@ -233,11 +248,13 @@ bool Syntax::IDs()
 	{
 		saved_token = currToken;
 		saved_string = currToken.LexemeName;
-		if(!isGet)
-		{
-			insert_symtable(saved_token.LexemeName, saved_type);
-		}
 		
+		if (isGet)
+		{
+		}
+		else
+			insert_symtable(saved_token.LexemeName, saved_type);
+
 		Match_t("Identifier");
 		return IDs_prime();
 	}
@@ -337,10 +354,8 @@ bool Syntax::Compound()//same as Body?
 	{
 		if (Statement_list())
 		{
-			if(Match("}"))
+			if (Match("}"))
 			{
-				if(isWhile)
-					gen_instr("JUMP", to_string(addr)); 
 				return true;
 			}
 			else
@@ -356,31 +371,33 @@ bool Syntax::Compound()//same as Body?
 bool Syntax::Assign()
 {
 	rules.push_back("<Assign> ::= <Identifier> = <Expression> ;");
-	if (currToken.TokenName == "Identifier")
-	{	
+	if (currToken.TokenName == "Identifier" || currToken.TokenName == "Integer")
+	{
+		
 		string a = get_type(currToken.LexemeName);
-		if(a == "Empty")
+		if (a == "Empty")
 		{
-			return syn_error("variable doesn't exist in symbol table", "<Assign>");
+			return syn_error("variable doesn't exist in symbol table1", "<Assign>");
 		}
 		Token save = currToken;
+		cout << "wowo " << save.LexemeName << "\n\n\n\n";;
 		Match_t("Identifier");
 		if (Match("="))
 		{
 			if (Expression())
 			{
-				string b = get_type(currToken.LexemeName);
-				if(b == "Empty")
+				string b = get_type(saved_token.LexemeName);
+				cout << a << " == " << b << endl; 
+				if (b == "Empty")
 				{
-					return syn_error("variable doesn't exist in symbol table", "<Assign>");
+					return syn_error("variable doesn't exist in symbol table2", "<Assign>");
 				}
-				if(a == b)
+				if (a == b)
 				{
 					gen_instr("POPM", to_string(get_address(save.LexemeName)));
 					return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
 				}
-				else
-					return syn_error("Variables don't match ", "<Assign>");
+
 			}
 			else
 				return false;
@@ -388,6 +405,7 @@ bool Syntax::Assign()
 		else
 			return syn_error("=", "<Assign>");
 	}
+	
 	return syn_error("<Identifier>", "<Assign>");
 }
 //<If> ::= if ( <Condition> ) <Statement> <If>'
@@ -395,7 +413,7 @@ bool Syntax::If()
 {
 	rules.push_back("<If> ::= if ( <Condition> ) <Statement> <If>'");
 	if (currToken.LexemeName == "if")
-	{	
+	{
 		addr2 = instr_address;
 		Match("if");
 		if (Match("("))
@@ -432,7 +450,7 @@ bool Syntax::If_prime()
 		Match("else");
 		if (Statement())
 		{
-			if(currToken.LexemeName == "ifend")
+			if (currToken.LexemeName == "ifend")
 			{
 				gen_instr("JUMP", to_string(addr2));
 				back_patch(instr_address);
@@ -493,13 +511,15 @@ bool Syntax::Print()
 {
 	if (currToken.LexemeName == "put")
 	{
-		gen_instr("STDOUT", "nil");
 		rules.push_back("<Print> ::= put ( <Expression>);");
 		Match("put");
 		if (Match("("))
 			if (Expression())
 				if (Match(")"))
+				{
+					gen_instr("STDOUT", "nil");
 					return ((Match(";")) ? true : syn_error(";", "<Print>"));
+				}
 				else
 					return syn_error(")", "<Print>");
 			else
@@ -521,8 +541,9 @@ bool Syntax::Scan()
 		if (Match("("))
 			if (IDs())
 			{
+				cout << "STDIN and POPM\n\n\n";
 				gen_instr("STDIN", "nil");
-				gen_instr("POPM" , to_string(get_address(saved_string)));
+				gen_instr("POPM", to_string(get_address(saved_string)));
 				if (Match(")"))
 					return ((Match(";")) ? true : syn_error(";", "<Scan>"));
 				else
@@ -543,6 +564,7 @@ bool Syntax::While()
 	{
 		isWhile = true;
 		int addr = instr_address;
+		cout << "wow";
 		gen_instr("LABEL", "nil");
 		rules.push_back("<While> ::= while ( <Condition> ) <Statement> whileend");
 		Match("while");
@@ -574,38 +596,30 @@ bool Syntax::Condition()
 	if (Expression())
 	{
 		string a = get_type(currToken.LexemeName);
-		if(a != "Empty")
+		if (a != "Empty")
 		{
 			if (Relop())
 			{
 				string b = get_type(currToken.LexemeName);
-				if(b != "Empty")
+				if (b != "Empty")
 				{
-					if(a == b)
+					if (a == b)
 					{
 						return Expression();
 					}
-					else 
+					else
 						return syn_error("variables aren't equal", "<Condition>");
-				}
-				else
-				{
-					cerr<< "No Boolean Arithmetic Operations\n";
-					return false;
 				}
 			}
 			else
+			{
+				cerr << "No Boolean Arithmetic Operations\n";
 				return false;
+			}
+			return true;
 		}
 		else
-		{
-
-		else
-		{
-			cerr<< "No Boolean Arithmetic Operations\n";
 			return false;
-		}
-
 	}
 	else
 		return false;
@@ -615,54 +629,54 @@ bool Syntax::Relop()
 {
 	if (currToken.LexemeName == "==")
 	{
-		gen_instr ("EQU", "nil");
-        	Push_JS (instr_address);  
-        	gen_instr ("JUMPZ", "nil");  
+		gen_instr("EQU", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= ==");
 		return Match("==");
 	}
 	//or
 	else if (currToken.LexemeName == "^=")
 	{
-		gen_instr ("NEQ", "nil");
-        	Push_JS (instr_address); 
-        	gen_instr ("JUMPZ", "nil");
+		gen_instr("NEQ", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= ^=");
 		return Match("^=");
 	}
 	//or
 	else if (currToken.LexemeName == ">")
 	{
-		gen_instr ("LES", "nil");
-        	Push_JS (instr_address);  
-        	gen_instr ("JUMPZ", "nil");
+		gen_instr("LES", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= >");
 		return Match(">");
 	}
 	//or
 	else if (currToken.LexemeName == "<")
 	{
-		gen_instr ("GRT", "nil");
-       		Push_JS (instr_address); 
-        	gen_instr ("JUMPZ", "nil");
+		gen_instr("GRT", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= <");
 		return Match("<");
 	}
 	//or
 	else if (currToken.LexemeName == "=>")
 	{
-		gen_instr ("GEQ", "nil");
-        	Push_JS (instr_address);  
-        	gen_instr ("JUMPZ", "nil");
+		gen_instr("GEQ", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =>");
 		return Match("=>");
 	}
 	//or
 	else if (currToken.LexemeName == "=<")
 	{
-		gen_instr ("LEQ", "nil");
-        	Push_JS (instr_address); 
-        	gen_instr ("JUMPZ", "nil");
+		gen_instr("LEQ", "nil");
+		Push_JS(instr_address);
+		gen_instr("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =<");
 		return Match("=<");
 	}
@@ -691,10 +705,19 @@ bool Syntax::ExpressionPrime()
 
 		if (Term())
 		{
-			(saved_symbol == "+")?gen_instr("ADD", "nil"):gen_instr("SUB", "nil");
+			cout << "Saved: " << saved_symbol << endl;
+			if (saved_symbol == "+")
+			{
+				gen_instr("ADD", "nil");
+				cout << "WTF Bro \n\n";
+			}
+			else
+				gen_instr("SUB", "nil");
 
 			return ExpressionPrime();
 		}
+		else
+			return false;
 	}
 	else
 	{
@@ -719,12 +742,14 @@ bool Syntax::TermPrime()
 		string saved_symbol = currToken.LexemeName;
 
 		Match(currToken.LexemeName);
-		if(Factor())
+		if (Factor())
 		{
-			(saved_symbol == "*")?gen_instr("MUL", "nil"):gen_instr("DIV", "nil");
+			(saved_symbol == "*") ? gen_instr("MUL", "nil") : gen_instr("DIV", "nil");
 
 			return TermPrime();
 		}
+		else
+			return false;
 	}
 	else //changable 
 	{
@@ -743,7 +768,7 @@ bool Syntax::Factor()
 	}
 	string t = currToken.TokenName;
 	string l = currToken.LexemeName;
-	if (t == "Identifier" || t == "Integer"  || l == "(" || l == "true" || l == "false")
+	if (t == "Identifier" || t == "Integer" || l == "(" || l == "true" || l == "false")
 	{
 		rules.push_back(("<Factor> ::= <Primary>"));
 		return Primary();
@@ -759,6 +784,7 @@ bool Syntax::Primary()
 {
 	if (currToken.TokenName == "Identifier")
 	{
+		saved_token = currToken;
 		gen_instr("PUSHM", to_string(get_address(currToken.LexemeName)));
 		saved_string = currToken.LexemeName;
 		rules.push_back("<Primary> ::= <Identifier> <Primary>'");
@@ -770,6 +796,9 @@ bool Syntax::Primary()
 	//or
 	else if (currToken.TokenName == "Integer")
 	{
+		saved_token = currToken;
+		cout << currToken.LexemeName << endl << endl;
+		saved2 = "int";
 		gen_instr("PUSHI", currToken.LexemeName);
 		rules.push_back("<Primary> ::= <Integer>");
 		return Match_t("Integer");
@@ -789,14 +818,14 @@ bool Syntax::Primary()
 	//or
 	else if (currToken.LexemeName == "true")
 	{
-		gen_instr("PUSHI" , "1");
+		gen_instr("PUSHI", "1");
 		rules.push_back("<Primary> ::= true");
 		return Match("true");
 	}
 	//or
 	else if (currToken.LexemeName == "false")
 	{
-		gen_instr("PUSHI" , "0");
+		gen_instr("PUSHI", "0");
 		rules.push_back("<Primary> ::= false");
 		return Match("false");
 	}
@@ -829,4 +858,182 @@ bool Syntax::Empty()
 {
 	//go to back to previous tokens then return??
 	return true;
+}
+
+
+void gen_instr(string op, string oprnd)
+/* instr_address  shows the current insturction address is global */
+{
+	Instruction n;
+	n.address = line_address;
+	n.op = op;
+	n.oprnd = oprnd;
+	instr_table[instr_address] = n;
+
+	cout << "Instruction: " << instr_table[instr_address].op << endl;
+	instr_address++;
+	line_address++;
+	instr_size++;
+	
+}
+
+void back_patch(int jump_addr)
+{
+
+	int addr = Pop_JS();
+	instr_table[addr].oprnd = to_string(jump_addr);
+
+}
+int get_address(string lexeme)
+{
+	int addr = 0;
+	size_t size = 0;
+	bool found = false;
+
+	while (!found && size < symbol)
+	{
+		if (sym_table[size].lexeme == lexeme)
+		{
+			found = true;
+			addr = sym_table[size].mem_addr;
+		}
+		size++;
+	}
+	return addr;
+
+}
+void Push_JS(int addr)
+{
+	jump_stack.push(addr);
+}
+
+int Pop_JS()
+{
+	int s = -1;
+	if (!jump_stack.empty())
+	{
+		s = jump_stack.top();
+		jump_stack.pop();
+	}
+	else
+	{
+		cerr << "Error : nothing in the stack\n";
+	}
+	return s;
+}
+bool is_number(string str)
+{
+	bool has_only_digits = true;
+	for (int i = 0; i < (strlen(str.c_str()) - 1); i++) {
+		if (!isdigit(str[i])) {
+			return false;
+		}
+	}
+	return has_only_digits;
+}
+string get_type(string lex)
+{
+	bool flag = false;
+	if (exists_symtable(lex))
+	{
+		int x = sym_table_type(lex);
+		if (x != -1)
+		{
+			return sym_table[x].type;
+		}
+	}
+	if (is_number(lex))
+	{
+		return "int";
+	}
+	else
+	{
+		return "Empty";
+	}
+}
+int sym_table_type(string lex)
+{
+
+	for (int i = 0; i< symbol; i++)
+	{
+		if (sym_table[i].lexeme == lex)
+		{
+			return i;
+		}
+	}
+	cerr << "Doesn't exist\n";
+	return -1;
+
+}
+
+//Checks to see if it's in the table
+bool exists_symtable(string lex)
+{
+	for (int i = 0; i< symbol; i++)
+	{
+
+		if (sym_table[i].lexeme == lex)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+//insert into the symbol table
+void insert_symtable(string lex, string type)
+{
+	
+	if (exists_symtable(lex))
+	{
+		cerr << lex << "already exists\n";
+	}
+	else
+	{
+		if (type == "Real")
+		{
+			cerr << "Doesn't exist\n";
+		}
+		else
+		{
+			Symbol s;
+			s.lexeme = lex;
+			s.type = type;
+			s.mem_addr = Memory_addr;
+			sym_table[symbol] = s;
+			cout << "lex: " << lex << "\n\n\n\n";
+			cout << "Insert " << sym_table[symbol].lexeme << endl;
+			cout << "Type " << sym_table[symbol].type << endl << endl;
+			cout << "Memory: " << sym_table[symbol].mem_addr << endl;
+			Memory_addr++;
+			symbol++;
+			
+		}
+	}
+
+
+}
+
+//printing functions
+
+void print_table()
+{
+	ofstream outputFile;
+	outputFile.open("tableOutput.txt");
+
+	cout << left << setw(20) << "Lexeme" << setw(20) << "Memory address" << setw(20) << "type" << endl;
+	outputFile << setw(20) << "Lexeme" << setw(20) << "Memory address" << setw(20) << "type" << endl;
+	for (int i = 0; i< symbol; i++)
+	{
+		cout << setw(20) << sym_table[i].lexeme << setw(20) << sym_table[i].mem_addr << setw(20) << sym_table[i].type << endl;
+		outputFile << setw(20) << sym_table[i].lexeme << setw(20) << sym_table[i].mem_addr << setw(20) << sym_table[i].type << endl;
+	}
+	cout << endl << setw(20) << "Address" << setw(20) << "Op" << setw(20) << "Oprnd" << endl;
+	outputFile << endl << setw(20) << "Address" << setw(20) << "Op" << setw(20) << "Oprnd" << endl;
+	for (int i = 0; i< instr_size; i++)
+	{
+		cout << setw(20) << instr_table[i].address << setw(20) << instr_table[i].op << setw(20) << instr_table[i].oprnd << endl;
+		outputFile << setw(20) << instr_table[i].address << setw(20) << instr_table[i].op << setw(20) << instr_table[i].oprnd << endl;
+	}
+
+	outputFile.close();
 }

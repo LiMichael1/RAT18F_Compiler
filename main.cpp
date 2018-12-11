@@ -4,7 +4,6 @@
 #include "fsm.h"
 #include <iomanip>
 #include "syntax.h"
-#include "semantics.h"
 
 
 
@@ -59,10 +58,7 @@ int main() {
 	Syntax s(all_tokens);
 	s.Rat18F();
 
-	ofstream tables;
-	tables.open("tableOutput.txt");
-	print_instr_table(tables);
-	print_sym_table(tables);
+	print_table();
 
 	system("pause");
 	return 0;
