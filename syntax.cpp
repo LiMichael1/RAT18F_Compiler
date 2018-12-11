@@ -3,10 +3,12 @@
 using namespace std;
 
 int addr;
+int addr2;
 string saved_string = " ";
 Token saved_token;
 string saved_type;
 bool isGet = false;
+bool isWhile = false;
 Syntax::Syntax(vector<Token> t)
 {
 	for (size_t i = 0; i<t.size(); i++)
@@ -334,7 +336,16 @@ bool Syntax::Compound()//same as Body?
 	if (Match("{"))
 	{
 		if (Statement_list())
-			return ((Match("}")) ? true : syn_error("}", "<Compound>"));
+		{
+			if(Match("}"))
+			{
+				if(isWhile)
+					gen_instr("JUMP", to_string(addr)); 
+				return true;
+			}
+			else
+				return syn_error("}", "<Compound>");
+		}
 		else
 			return false;
 	}
@@ -346,15 +357,30 @@ bool Syntax::Assign()
 {
 	rules.push_back("<Assign> ::= <Identifier> = <Expression> ;");
 	if (currToken.TokenName == "Identifier")
-	{
+	{	
+		string a = get_type(currToken.LexemeName);
+		if(a == "Empty")
+		{
+			return syn_error("variable doesn't exist in symbol table", "<Assign>");
+		}
 		Token save = currToken;
 		Match_t("Identifier");
 		if (Match("="))
 		{
 			if (Expression())
 			{
-				gen_instr("POPM", to_string(get_address(save.LexemeName)));
-				return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
+				string b = get_type(currToken.LexemeName);
+				if(b == "Empty")
+				{
+					return syn_error("variable doesn't exist in symbol table", "<Assign>");
+				}
+				if(a == b)
+				{
+					gen_instr("POPM", to_string(get_address(save.LexemeName)));
+					return ((Match(";")) ? true : syn_error("<Identifier>", "<Assign>"));
+				}
+				else
+					return syn_error("Variables don't match ", "<Assign>");
 			}
 			else
 				return false;
@@ -370,7 +396,7 @@ bool Syntax::If()
 	rules.push_back("<If> ::= if ( <Condition> ) <Statement> <If>'");
 	if (currToken.LexemeName == "if")
 	{	
-		addr = instr_address;
+		addr2 = instr_address;
 		Match("if");
 		if (Match("("))
 			if (Condition())
@@ -395,7 +421,7 @@ bool Syntax::If_prime()
 {
 	if (currToken.LexemeName == "ifend")
 	{
-		gen_instr("JUMP", "nil");
+		gen_instr("JUMP", to_string(addr2));
 		back_patch(instr_address);
 		rules.push_back("<If>' ::= ifend");
 		return Match("ifend");
@@ -408,7 +434,7 @@ bool Syntax::If_prime()
 		{
 			if(currToken.LexemeName == "ifend")
 			{
-				gen_instr("JUMP", "nil");
+				gen_instr("JUMP", to_string(addr2));
 				back_patch(instr_address);
 				return ((Match("ifend")) ? true : syn_error("ifend", "<If>'"));
 			}
@@ -515,8 +541,9 @@ bool Syntax::While()
 {
 	if (currToken.LexemeName == "while")
 	{
+		isWhile = true;
 		int addr = instr_address;
-		gen_instr("Label", "nil");
+		gen_instr("LABEL", "nil");
 		rules.push_back("<While> ::= while ( <Condition> ) <Statement> whileend");
 		Match("while");
 		if (Match("("))
@@ -546,13 +573,20 @@ bool Syntax::Condition()
 	rules.push_back("<Condition> ::= <Expression> <Relop> <Expression>");
 	if (Expression())
 	{
-		if(currToken.TokenName == "Integer")
+		string a = get_type(currToken.LexemeName);
+		if(a != "Empty")
 		{
 			if (Relop())
 			{
-				if(currToken.TokenName== "Integer")
+				string b = get_type(currToken.LexemeName);
+				if(b != "Empty")
 				{
-					return Expression();
+					if(a == b)
+					{
+						return Expression();
+					}
+					else 
+						return syn_error("variables aren't equal", "<Condition>");
 				}
 				else
 				{
@@ -563,6 +597,9 @@ bool Syntax::Condition()
 			else
 				return false;
 		}
+		else
+		{
+
 		else
 		{
 			cerr<< "No Boolean Arithmetic Operations\n";
@@ -579,8 +616,8 @@ bool Syntax::Relop()
 	if (currToken.LexemeName == "==")
 	{
 		gen_instr ("EQU", "nil");
-        Push_JS (instr_address);  
-        gen_instr ("JUMPZ", "nil");  
+        	Push_JS (instr_address);  
+        	gen_instr ("JUMPZ", "nil");  
 		rules.push_back("<Relop> ::= ==");
 		return Match("==");
 	}
@@ -588,8 +625,8 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == "^=")
 	{
 		gen_instr ("NEQ", "nil");
-        Push_JS (instr_address); 
-        gen_instr ("JUMPZ", "nil");
+        	Push_JS (instr_address); 
+        	gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= ^=");
 		return Match("^=");
 	}
@@ -597,8 +634,8 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == ">")
 	{
 		gen_instr ("LES", "nil");
-        Push_JS (instr_address);  
-        gen_instr ("JUMPZ", "nil");
+        	Push_JS (instr_address);  
+        	gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= >");
 		return Match(">");
 	}
@@ -606,8 +643,8 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == "<")
 	{
 		gen_instr ("GRT", "nil");
-        Push_JS (instr_address); 
-        gen_instr ("JUMPZ", "nil");
+       		Push_JS (instr_address); 
+        	gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= <");
 		return Match("<");
 	}
@@ -615,8 +652,8 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == "=>")
 	{
 		gen_instr ("GEQ", "nil");
-        Push_JS (instr_address);  
-        gen_instr ("JUMPZ", "nil");
+        	Push_JS (instr_address);  
+        	gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =>");
 		return Match("=>");
 	}
@@ -624,8 +661,8 @@ bool Syntax::Relop()
 	else if (currToken.LexemeName == "=<")
 	{
 		gen_instr ("LEQ", "nil");
-        Push_JS (instr_address); 
-        gen_instr ("JUMPZ", "nil");
+        	Push_JS (instr_address); 
+        	gen_instr ("JUMPZ", "nil");
 		rules.push_back("<Relop> ::= =<");
 		return Match("=<");
 	}
